@@ -1,30 +1,34 @@
 #Sort Downloaded LvD Files
 #!usr/bin/env python
-import os, shutil, math, datetime, time, json, glob, pikepdf, pathlib
-from random import sample
-import re
+
+import os, shutil, math, datetime, time, json, glob, pikepdf
 import zipfile as zf
-import xml.etree.ElementTree as ET
+from pathlib import Path
 from datetime import date, timedelta, datetime
 from sqlitedict import SqliteDict
-from PyPDF2 import PdfFileReader, PdfFileWriter, PdfFileMerger
+from PyPDF2 import PdfFileReader, PdfFileWriter, PdfFileMerger, utils
+from io import StringIO
+import subprocess
+
 #Location for Caldera's Folders
-#HELLO GIT
 if os.path.expanduser('~').split('/')[-1] == 'Trevor':
     calderaDir = '/opt/caldera/var/public/'
     driveLocation = '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Test Fulfillment'
 else:
     calderaDir = '/Volumes/Print Drive/caldera/public/'
     driveLocation = '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Fulfillment'
+
 orderdb = calderaDir + 'z_Storage/z_WallpaperDB/lvdOrderDatabase.sqlite'
 ordersDict = SqliteDict(orderdb, autocommit=True)
 batchCounterDB = calderaDir + 'z_Storage/z_WallpaperDB/lvdGlobalBatchCounter.sqlite'
 globalBatchCounter = SqliteDict(batchCounterDB, autocommit=True)
 #globalBatchCounter['batchCounter'] = 1
+
 batchFoldersDir = calderaDir + '2 Batch Folders/'
 downloadDir = calderaDir + '3 Downloaded/'
 needsAttention = calderaDir + '4 Needs Attention/'
 sortingDir = calderaDir + '5 Sorted for Print/'
+
 dirLookupDict = { #Dictionary for dynamically creating a directory path for sorting based on lookup tables
     'Sm':'Smooth/', #Smooth Folders
     'Smooth':'Smooth/',
@@ -55,6 +59,7 @@ dirLookupDict = { #Dictionary for dynamically creating a directory path for sort
         'Traditional':98 * 12,
     },
 }
+
 substrate = {
     'Woven Peel and Stick':'Wv',
     'Woven':'Wv',
@@ -64,6 +69,7 @@ substrate = {
     'Sm':'Smooth',
     'Traditional':'Tr'
     }
+
 shippingMethods = {
     'Standard':'Stnd',
     'Sample Standard':'SmStnd',
@@ -72,15 +78,20 @@ shippingMethods = {
     'International Priority':'InPrty',
     'Rush':'Rush',
 }
+
 pdfsToRename = {
     
 }
+
 countOfRefPDFs = { #Running count of PDFs that are referenced during sample creating. If a PDF is referenced more than once, the order and PDF are printed to alert fulfillment of dual-type samples
     
 }
+
 orderItemsDict = {
 }
+
 today = date.today()
+
 ### Definitions
 ### Definitions
 
@@ -106,6 +117,8 @@ def main():
         findJSONs()
         reportDuplicatePDFs()
         splitMultiPagePDFs()
+        if os.path.expanduser('~').split('/')[-1] == 'Trevor':
+            checkRepeatSize()
         sortPDFsByDetails()
         buildDBSadNoises()
         return main()
@@ -132,13 +145,14 @@ def main():
             if fullOrPartialRun == 'y':
                 shutil.rmtree(batchFoldersDir)
                 os.mkdir(batchFoldersDir)
-                # shutil.rmtree(downloadDir)
-                # shutil.copytree('/Users/Trevor/Desktop/Backup/Downloaded', downloadDir)
-                shutil.rmtree(sortingDir)
-                shutil.copytree('/Users/Trevor/Desktop/Backup/5 Sorted for Print', sortingDir)
+                shutil.rmtree(downloadDir)
+                shutil.copytree('/Users/Trevor/Desktop/Backup/Downloaded', downloadDir)
+                # shutil.rmtree(sortingDir)
+                # shutil.copytree('/Users/Trevor/Desktop/Backup/5 Sorted for Print', sortingDir)
                 findJSONs()   
                 reportDuplicatePDFs()
-                splitMultiPagePDFs()
+                #splitMultiPagePDFs()
+                checkRepeatSize()
                 sortPDFsByDetails()
             transferFromDrive = input('| Do you want to transfer files from drive?\n| This will copy the current directory to a test directory. > ')
             if transferFromDrive == 'y':
@@ -194,7 +208,7 @@ def moveForDueDates():
         if orderSize == 'Samp':
             try:
                 shutil.move(file, sortingDir + orderDueDate + dirLookupDict[material] + 'Sample/')
-                print('| Updated', file.split('/')[-1])
+                print('| Updated:', file.split('/')[-1])
             except:
                 try:
                     shutil.copy(file, sortingDir + orderDueDate + dirLookupDict[material] + 'Sample/')
@@ -410,7 +424,7 @@ def renamePDF(old, new):
         os.rename(old, itemName)
         os.rename(old + ' - temp', old)
     except OSError:
-        print("\n| Error Renaming. PDF may not exist in package." + "\n| Original File Name: " + old + "\n| New Item Name: " + itemName + "\n| *** Please check order", itemName.split("(")[0],"***")
+        print("\n| Error Renaming. PDF may not exist in package." + "\n| Original File Name: " + old + "\n| New Item Name: " + itemName + "\n| *** Please check order", itemName.split("-")[0],"***")
 
 def keepTrackOfOrderNumber(orderNumber): #keeps track of the original PDF names to alert fulfillment to multi-paper type PDFs
     if orderNumber in countOfRefPDFs:
@@ -555,7 +569,17 @@ def buildDBSadNoises():
     print('| Building DB. Please hold.')
     fullOrdersDirectory = sortingDir + '**/Full/*.pdf' 
     #300014839-2-(2022-02-15)-Stnd-Sm-Samp-Rp 2-Qty 1-Mod Herons-L9.5-W25-H9
-    
+    # buildDBSadNoises()
+    # print('| Printing Current Order Database.')
+    # for order in orderItemsDict:
+    #    print(f'|-{order}')
+    #    for orderItemID in orderItemsDict[order]:
+    #        if orderItemsDict[order][orderItemID]['Order Size'] == 'Full':
+    #            print(f'|  -- {orderItemID}')
+    #            print('|    --', orderItemsDict[order][orderItemID]['Status'])
+    #            print('|    --', orderItemsDict[order][orderItemID]['Order Size'])
+    #            print('|    --', orderItemsDict[order][orderItemID]['Length'])
+    #            print('|    --', orderItemsDict[order][orderItemID]['Repeat'])
     for printPDF in glob.iglob(sortingDir + '**/*.pdf', recursive=True):
         orderItemID = 1
         fileName = printPDF.split('/')[-1].split('.pdf')[0]
@@ -607,15 +631,16 @@ def buildDBSadNoises():
     print('| DB Built.')
 
 def batchOrdersMain():
-    options = 1,2,3,4,0
+    options = 1,2,3,4,5,0
     print('\n| Main Menu > Batch Orders')
     print('| 1. Batch Smooth Full')
     print('| 2. Batch Smooth Samples')
     print('| 3. Batch Woven Full')
     print('| 4. Batch Woven Samples')
+    print('| 5. Combine Batches')
     print('| 0. Return to Main Menu.')
     try:
-        command = int(input('| Command > '))
+        command = int(input('\n| Command > '))
     except ValueError:
         print('\n| Please enter a number, not text.')
         return batchOrdersMain()
@@ -654,6 +679,9 @@ def batchOrdersMain():
         elif confirm == False:
             print('\n| Returning to Batch Orders.')
             return batchOrdersMain()
+    elif command == 5:
+        material = input('| Material please > ')
+        combineBatchFoldersController(material)
     elif command == 0:
         print('| Returning to Main Menu.')
         return main()
@@ -684,17 +712,17 @@ def batchingController(material, orderSize):
     batchDir = batchDirBuilder(material, orderSize)
     if orderSize == 'Full':
         findOrdersForPrint2Ptv2(batchDir, material, orderSize, (int(materialLength)*12))
-        removeEmptyBatchFolders()
-        #combineBatchFoldersMaster()
+        removeEmptyBatchFolders(True)
+        #combineBatchFoldersController(material)
         batchDir = batchDirBuilder(material, orderSize)
         findOrdersForPrint4Ptv2(batchDir, material, orderSize, (int(materialLength)*12))
-        removeEmptyBatchFolders()
+        removeEmptyBatchFolders(True)
     else:
         findSampleOrdersForPrint(batchDir, material, orderSize, (int(materialLength * 12)))
     print('\n| Finished batching', material, orderSize, 'orders.')
 
-def removeOldOrders(folderToClean): #removes folders and contents older than X days
-    olderThanDays = (100)
+def removeOldOrders(folderToClean, days): #removes folders and contents older than X days
+    olderThanDays = days
     for subFolder in folderToClean.values(): #gets subfolder path
         for parentFolder, folder, file in os.walk(subFolder[1] + '/'): #
             folderName = os.path.basename(parentFolder) #extracts just the folder name from the folder path
@@ -1063,23 +1091,6 @@ def transferFilesFromDrive():
     print('\n| Finished transferring files from Google Drive.')
     return main()
 
-def orderNeedsAttention(order, reason):
-    print('\n| Couldn\'t add the following order a batch.')
-    print('| Reason:', reason)
-    print('| Order:', order.split('/')[11])
-    try:
-        shutil.copy(order, needsAttention)
-        try:
-            os.remove(order)
-            print('| The order has been moved to the Needs Attention folder.')
-            return
-        except:
-            print('| Moved the order to Needs Attention, but couldn\'t remove the original PDF.')
-            return
-    except:
-        print('| Tried to remove the original order, but couldn\'t.  Please locate it and move it to Needs Attention.')
-        return
-
 def batchDirBuilder(material, orderSize):
     batchDir = batchFoldersDir + 'Batch #' + str(globalBatchCounter['batchCounter']) + ' ' + today.strftime('%m-%d-%y') + ' ' + material + ' ' + orderSize + ' L0'
     globalBatchCounter['batchCounter'] += 1
@@ -1151,9 +1162,12 @@ def batchMaterialLengthSelector():
         print('| Invalid size choice. Returning.')
         return batchMaterialLengthSelector()
 
-def combineBatchFoldersMaster():
-    findBatchFoldersToCombine()
-
+def combineBatchFoldersController(material):
+    loopCounter = 0
+    while loopCounter < 3:
+        loopCounter += 1
+        findBatchFoldersToCombine(material)
+        
 def getMaterialLength(material):
     try:
         materialLength = int(input('\n| Combining Full ' + material + ' batch folders.\n| Please enter a material length > ')) * 12
@@ -1162,73 +1176,75 @@ def getMaterialLength(material):
         print('\n| Please enter a number, not text.')
         return getMaterialLength()
 
-def findBatchFoldersToCombine():
-    # Checks for Smooth Full Batch Orders
+def findBatchFoldersToCombine(material):
+  
+    materialLength = getMaterialLength(material)
 
-    materialLength = getMaterialLength('Smooth')
-
-    for batchFolder in glob.iglob(batchFoldersDir + '*Smooth Full*'):
+    for batchFolder in glob.iglob(batchFoldersDir + '*' + material + ' Full*'):
         batchLength = float(batchFolder.split('/')[-1].split(' ')[-1].split('L')[1])
         # Checks if Batch Order Length is less that 85% of the specified Material Length
         if batchLength < (materialLength * .85):
             # If it is less than 85%, then it begins to iterate through other batch folders to find ones to combine.
-            for batchFolderToJoin in glob.iglob(batchFoldersDir + '*Smooth Full*'):
+            for batchFolderToJoin in glob.iglob(batchFoldersDir + '*' + material + ' Full*'):
                 batchLengthToJoin = float(batchFolderToJoin.split('/')[-1].split(' ')[-1].split('L')[1])
                 # If the batch folder and the potential folder to join are the same folder, skips that iteration.
                 if batchFolderToJoin == batchFolder:
                     continue
                 # If the total length of the batch folder and the potential folder to join is less than the material length, iteratethrough batch folder to join and moves each pdf to the original folder.
                 if batchLength + batchLengthToJoin < materialLength:
-                    combineBatchFolders(batchFolder, batchLength, batchFolderToJoin, batchLengthToJoin)
+                    combineBatchFolders(batchFolder, batchLength, batchFolderToJoin, batchLengthToJoin, material)
 
-    materialLength = getMaterialLength('Woven')
+def combineBatchFolders(batchFolder, batchLength, batchFolderToJoin, batchLengthToJoin, material):
+    combinedBatchDir = batchDirBuilder(material, 'Full')
 
-    for batchFolder in glob.iglob(batchFoldersDir + '*Woven Full*'):
-        batchLength = float(batchFolder.split('/')[-1].split(' ')[-1].split('L')[1])
-        # Checks if Batch Order Length is less that 85% of the specified Material Length
-        if batchLength < (materialLength * .85):
-            # If it is less than 85%, then it begins to iterate through other batch folders to find ones to combine.
-            for batchFolderToJoin in glob.iglob(batchFoldersDir + '*Woven Full*'):
-                batchLengthToJoin = float(batchFolderToJoin.split('/')[-1].split(' ')[-1].split('L')[1])
-                # If the batch folder and the potential folder to join are the same folder, skips that iteration.
-                if batchFolderToJoin == batchFolder:
-                    continue
-                # If the total length of the batch folder and the potential folder to join is less than the material length, iteratethrough batch folder to join and moves each pdf to the original folder.
-                if batchLength + batchLengthToJoin < materialLength:
-                    combineBatchFolders(batchFolder, batchLength, batchFolderToJoin, batchLengthToJoin)
-
-def combineBatchFolders(batchFolder, batchLength, batchFolderToJoin, batchLengthToJoin):
-    for printPDF in glob.iglob(batchFolderToJoin + '/*.pdf'):
+    for printPDF in glob.iglob(batchFolder + '/*.pdf'):
         try:
-            shutil.move(printPDF, batchFolder)
+            shutil.move(printPDF, combinedBatchDir)
         except shutil.Error:
-            shutil.copy(printPDF, batchFolder)
+            shutil.copy(printPDF, combinedBatchDir)
             try:
                 os.remove(printPDF)
             except OSError:
                 print('|> Could not remove', printPDF.split('/')[-1])
-    # Once moving files is complete, adds the batch lengths and renames the original batch folder
-    newBatchLength = batchLength + batchLengthToJoin
-    newBatchFolder = batchFolder.split('/')[-1].split(str(batchLength))[0] + str(newBatchLength)
-    newBatchLocation = batchFolder.split('Batch #')[0]
-    try:
-        os.rename(batchFolder, newBatchLocation + newBatchFolder)
-        if len(os.listdir(batchFolderToJoin)) == 0:
-            os.rmdir(batchFolderToJoin)
-        else:
-            print('| Combined batch folder not empty. Please check it for contents.\n| Folder:', batchFolderToJoin)
-        return combineBatchFoldersMaster()
-    except OSError:
-        print('| All Batch Folders combined as best I could. Some lengths may be shorter than listed.')
-        return batchOrdersMain()
+    for printPDF in glob.iglob(batchFolderToJoin + '/*.pdf'):
+        try:
+            shutil.move(printPDF, combinedBatchDir)
+        except shutil.Error:
+            shutil.copy(printPDF, combinedBatchDir)
+            try:
+                os.remove(printPDF)
+            except OSError:
+                print('|> Could not remove', printPDF.split('/')[-1])
 
-def removeEmptyBatchFolders():
+    evenLengths = []
+    #oddLengths = ()
+    newBatchLength = 0
+
+    for printPDF in glob.iglob(combinedBatchDir + '/*.pdf'):
+        printPDFLength = float(printPDF.split('/')[-1].split('-')[11].split('L')[1])
+        evenLengths.append(printPDFLength)
+
+    for lengthEntry in evenLengths:
+        newBatchLength += lengthEntry
+    
+    newBatchName = combinedBatchDir.split('/')[6].split(' L')[0] + ' L' + str(newBatchLength)
+    os.rename(combinedBatchDir, batchFoldersDir + newBatchName)
+    removeEmptyBatchFolders(False)
+    return combineBatchFoldersController(material)
+
+def removeEmptyBatchFolders(safe):
     for batchFolder in glob.iglob(batchFoldersDir + '*'):
         batchLength = float(batchFolder.split('/')[-1].split(' ')[-1].split('L')[1])
-        if os.path.isdir(batchFolder) == False:
-            continue
-        elif (len(os.listdir(batchFolder)) == 0) and (batchLength == 0):
-            os.rmdir(batchFolder)
+        if safe == True:
+            if os.path.isdir(batchFolder) == False:
+                continue
+            elif (len(os.listdir(batchFolder)) == 0) and (batchLength == 0):
+                os.rmdir(batchFolder)
+        else:
+            if os.path.isdir(batchFolder) == False:
+                continue
+            elif (len(os.listdir(batchFolder)) == 0):
+                os.rmdir(batchFolder)
 
 def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
     lateAndOTOrders = sortingDir + '1 - Late and OT/' + dirLookupDict[material] + dirLookupDict[orderSize]
@@ -1800,16 +1816,186 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
             batchDir = batchDirBuilder(material, orderSize)
             #materialLength = input('| Please input your material length. > ')
             return findOrdersForPrint4Ptv2(batchDir, material, orderSize, int(materialLength))
-    #buildDBSadNoises()
-    #print('| Printing Current Order Database.')
-    #for order in orderItemsDict:
-    #    print(f'|-{order}')
-    #    for orderItemID in orderItemsDict[order]:
-    #        if orderItemsDict[order][orderItemID]['Order Size'] == 'Full':
-    #            print(f'|  -- {orderItemID}')
-    #            print('|    --', orderItemsDict[order][orderItemID]['Status'])
-    #            print('|    --', orderItemsDict[order][orderItemID]['Order Size'])
-    #            print('|    --', orderItemsDict[order][orderItemID]['Length'])
-    #            print('|    --', orderItemsDict[order][orderItemID]['Repeat'])
+
+def checkRepeatSize():
+    for printPDF in glob.iglob(downloadDir + '*.pdf'):
+        printPDFFull = printPDF.split('/')[-1].split('-')[7]
+        printPDFrepeat = int(printPDF.split('/')[-1].split('-')[8].split('Rp ')[1])
+        if printPDFFull == 'Full':
+            if printPDFrepeat % 2 == 1:
+                try:
+                    shutil.move(printPDF, needsAttention)
+                    print('| File has an odd repeat and has been moved to 4 Needs Attention')
+                    print('| File:', printPDF.split('/')[-1])
+                except shutil.Error:
+                    shutil.copy(printPDF, needsAttention)
+                    try:
+                        os.remove(printPDF)
+                    except OSError:
+                        print('|> Could not successfully remove file.')
+                        print('|> File:', printPDF)
+                except FileNotFoundError:
+                    print('| Couldn\'t find the following file.')
+                    print('| File:', printPDF)
+            elif printPDFrepeat == 2:
+                continue
+            elif printPDFrepeat > 2:
+                try:
+                    cropMultiPanelPDFs(printPDF)
+                except utils.PdfReadError:
+                    print('| Couldn\'t crop the panels for the following order. Please check non-repeat 2 folders.')
+                    continue
+
+def cropMultiPanelPDFs(printPDFToSplit):
+    orderDict = {
+        'fileName':printPDFToSplit.split('.pdf')[0],
+        'orderNumber': printPDFToSplit.split('/')[-1].split('-')[0],
+        'orderItem': printPDFToSplit.split('-')[1],
+        'orderDueDate': datetime.date(datetime.strptime(printPDFToSplit.split('(')[1].split(')')[0], '%Y-%m-%d')),
+        'shipVia': printPDFToSplit.split('-')[5],
+        'material': printPDFToSplit.split('-')[6],
+        'orderSize': printPDFToSplit.split('-')[7],
+        'repeat': int(printPDFToSplit.split('-')[8].split('Rp ')[1]),
+        'repeatPanels': int(int(printPDFToSplit.split('-')[8].split('Rp ')[1]) / 2),
+        'quantity': int(printPDFToSplit.split('-')[9].split('Qty ')[1]),
+        'oddOrEven': int(printPDFToSplit.split('-')[9].split('Qty ')[1]) % 2,
+        'templateName': printPDFToSplit.split('-')[10],
+        'orderLength': float(printPDFToSplit.split('-')[11].split('L')[1]),
+        'orderWidth': int(printPDFToSplit.split('-')[12].split('W')[1]),
+        'orderHeight': float(printPDFToSplit.split('-')[13].split('H')[1].split('.pdf')[0]),
+        'multiPagePDFs' : [],
+        'PDFPanelsToCombine' : [],
+        }
+    
+    orderDict['CroppedPDFName'] = orderDict['fileName'].split(orderDict['templateName'])[0] + orderDict['templateName'] + ' Split' + orderDict['fileName'].split(orderDict['templateName'])[1] + '.pdf'
+
+    print('| Working file\n| ', printPDFToSplit)
+    for entry in orderDict:
+        print('|    ', orderDict[entry])
+
+    os.chdir(downloadDir)
+    for page in range(orderDict['repeatPanels']):
+        writer = PdfFileWriter()
+        inputPDF = open(printPDFToSplit,'rb')
+        cropPDF = PdfFileReader(inputPDF)
+        page = cropPDF.getPage(0)
+        print('| File:', printPDFToSplit.split('/')[-1])
+        print('| Width:', (page.mediaBox.getUpperRight_x())/72, 'inches, Height:', (page.mediaBox.getUpperRight_y()/72))
+        lowerLeftX = 0
+        lowerLeftY = 0
+        upperRightX = 1800
+        upperRightY = cropPDF.getPage(0).cropBox.getUpperRight()[1]
+        for cropCount in range(orderDict['repeatPanels']):
+            page.trimBox.lowerLeft = (lowerLeftX, lowerLeftY)
+            page.trimBox.upperRight = (upperRightX, upperRightY)
+            page.bleedBox.lowerLeft = (lowerLeftX, lowerLeftY)
+            page.bleedBox.upperRight = (upperRightX, upperRightY)
+            page.cropBox.lowerLeft = (lowerLeftX, lowerLeftY)
+            page.cropBox.upperRight = (upperRightX, upperRightY)
+            writer.addPage(page)
+            lowerLeftX += 1728
+            upperRightX += 1728
+            printPDFName = downloadDir + orderDict['orderNumber'] + '-' + orderDict['orderItem'] + '-' + str(cropCount + 1) + '.pdf'
+            if printPDFName in orderDict['multiPagePDFs']:
+                continue
+            else:
+                orderDict['multiPagePDFs'].append(printPDFName)
+            with open(printPDFName, "wb") as outputPDF:
+                writer.write(outputPDF)
+        inputPDF.close()
+
+    for PDF in orderDict['multiPagePDFs']:
+        writer = PdfFileWriter()
+        try:
+            printPDF = PdfFileReader(open(PDF, "rb"))
+        except utils.PdfReadError:
+            print('| Couldn\'t fix file. Skipping.\n| File:', PDF)
+            continue
+        numOfPages = printPDF.getNumPages()
+        print('\n| File:', PDF, '\n| File has %d pages.' % printPDF.getNumPages())
+
+        for pageNum in range(numOfPages):
+            if (pageNum + 1) < numOfPages:
+                continue
+            else:
+                writer.addPage(printPDF.getPage(pageNum))
+        newNamePt1 = orderDict['fileName'].split(orderDict['templateName'])[0]
+        newNamePt2 = orderDict['fileName'].split(orderDict['templateName'])[1]
+        panelNum = orderDict['templateName'] + ' Panel ' + str(pageNum + 1)
+        newName = newNamePt1 + panelNum + newNamePt2 + '.pdf'
+        if newName in orderDict['PDFPanelsToCombine']:
+            continue
+        else:
+            orderDict['PDFPanelsToCombine'].append(newName)
+
+        with open(newName, 'wb') as outputPDF:
+            writer.write(outputPDF)
+    
+    for PDF in orderDict['multiPagePDFs']:
+        os.remove(PDF)
+    
+    print(orderDict['PDFPanelsToCombine'])
+
+    splitAndCombinedPDF = combineSplitPDFS(orderDict['PDFPanelsToCombine'], orderDict['CroppedPDFName'])
+
+    print('| File has been split apart, cropped, and recombined.\n| File:', splitAndCombinedPDF.split('/')[-1])
+
+    if Path(calderaDir + 'z_Storage/Original Files/').exists() == False:
+        os.mkdir(calderaDir + 'z_Storage/Original Files')
+    
+    storageDir = calderaDir + 'z_Storage/Original Files/'
+    
+    try:
+        shutil.move(printPDFToSplit, storageDir)
+    except shutil.Error:
+        shutil.copy(printPDFToSplit, storageDir)
+        os.remove(printPDFToSplit)
+
+    for PDF in orderDict['PDFPanelsToCombine']:
+        os.remove(PDF)
+
+def combineSplitPDFS(listOfPDFs, saveLocation):
+    masterPDF = PdfFileMerger()
+
+    for PDFToMerge in listOfPDFs:
+        masterPDF.append(PdfFileReader(PDFToMerge, 'rb'))
+    masterPDF.write(saveLocation)
+
+    return saveLocation
+
+def decompress_pdf(temp_buffer):
+    temp_buffer.seek(0)  # Make sure we're at the start of the file.
+
+    process = subprocess.Popen(['pdftk.exe',
+                                '-',  # Read from stdin.
+                                'output',
+                                '-',  # Write to stdout.
+                                'uncompress'],
+                                stdin=temp_buffer,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+
+    return StringIO(stdout)
+
+def buildABatch(batchDir, material, materialLength):
+    lateAndOTOrders = sortingDir + '1 - Late and OT/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    todayOrders = sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
+    futureOrders = sortingDir + '3 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
+
+    '''
+    Lets do some pseudo code!
+    First, get the total length of material (let's say 150 for smooth)
+    then, look for full 2' repeat orders 
+    add them to the current batch until the batch length is 
+
+    '''
+
+    # findFull2pOrders()
+    # findSampleOrders()
+    # findColorGuides()
+
+    return
+
 main()
 ## End
