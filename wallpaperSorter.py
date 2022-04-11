@@ -1988,6 +1988,10 @@ def buildABatch(batchDir, material, materialLength):
     First, get the total length of material (let's say 150 for smooth)
     then, look for full 2' repeat orders 
     add them to the current batch until the batch length is 
+    repeat until batch is 85% of material length OR until there are no more full, 2' repeat orders
+    once 85% of material length is exceeded, search for 13% worth of samples OR until there are no additional samples
+    once that 13% has been met or exceeded, add 5% of color guides.
+    Once that 5% has been met, complete the batch.
 
     '''
 
