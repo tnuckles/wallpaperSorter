@@ -198,11 +198,11 @@ def checkOrderDirectoryStructure():
         os.mkdir(sortingDir + '2 - Late Orders/')
         buildSortedDirStructure(sortingDir + '2 - Late Orders/')
     if Path(sortingDir + '2 - Today/').exists() == True:
-        os.mkdir(sortingDir + '3 - Today')
-        buildSortedDirStructure(sortingDir + '3 - Today')
+        os.mkdir(sortingDir + '3 - Today/')
+        buildSortedDirStructure(sortingDir + '3 - Today/')
     if Path(sortingDir + '3 - Future/').exists() == True:
-        os.mkdir(sortingDir + '4 - Future')
-        buildSortedDirStructure(sortingDir + '4 - Future')
+        os.mkdir(sortingDir + '4 - Future/')
+        buildSortedDirStructure(sortingDir + '4 - Future/')
     return
 
 def moveForDueDates():
