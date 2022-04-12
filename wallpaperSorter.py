@@ -1,4 +1,3 @@
-#Sort Downloaded LvD Files
 #!usr/bin/env python
 
 import os, shutil, math, datetime, time, json, glob, pikepdf
@@ -97,8 +96,6 @@ today = date.today()
 
 def main():
     options = 1,2,3,4,5,6,0
-    checkBatchCounter()
-    moveForDueDates()
     print('\n| Main Menu')
     print('| 1. Sort Orders')
     print('| 2. Download Orders from Google Drive')
@@ -162,9 +159,51 @@ def main():
             return main()
     print('\n| Job\'s Done!')
 
+def startupChecks():
+    checkOrderDirectoryStructure()
+    checkBatchCounter()
+    moveForDueDates()
+
 def checkBatchCounter():
     if globalBatchCounter['batchCounter'] > 9000:
         globalBatchCounter['batchCounter'] = 1
+
+def buildSortedDirStructure(parentFolder):
+    os.mkdir(parentFolder + 'Smooth/')
+    os.mkdir(parentFolder + 'Smooth/Sample')
+    os.mkdir(parentFolder + 'Smooth/Full/')
+    os.mkdir(parentFolder + 'Smooth/Full/Repeat 2/')
+    os.mkdir(parentFolder + 'Smooth/Full/Repeat 2/Even Panels/')
+    os.mkdir(parentFolder + 'Smooth/Full/Repeat 2/Odd Panels/')
+    os.mkdir(parentFolder + 'Smooth/Full/Repeat Non-2/')
+    os.mkdir(parentFolder + 'Smooth/Full/Repeat Non-2/Even Panels/')
+    os.mkdir(parentFolder + 'Smooth/Full/Repeat Non-2/Odd Panels/')
+    os.mkdir(parentFolder + 'Woven/')
+    os.mkdir(parentFolder + 'Woven/Sample')
+    os.mkdir(parentFolder + 'Woven/Full/')
+    os.mkdir(parentFolder + 'Woven/Full/Repeat 2/')
+    os.mkdir(parentFolder + 'Woven/Full/Repeat 2/Even Panels/')
+    os.mkdir(parentFolder + 'Woven/Full/Repeat 2/Odd Panels/')
+    os.mkdir(parentFolder + 'Woven/Full/Repeat Non-2/')
+    os.mkdir(parentFolder + 'Woven/Full/Repeat Non-2/Even Panels/')
+    os.mkdir(parentFolder + 'Woven/Full/Repeat Non-2/Odd Panels/')
+    return
+
+def checkOrderDirectoryStructure():
+    if Path(calderaDir + '# Past Orders/Original Files/').exists() == False:
+       os.mkdir(calderaDir + '# Past Orders/Original Files')
+    if Path(sortingDir + '1 - Late and OT/').exists() == True:
+        os.mkdir(sortingDir + '1 - OT Orders/')
+        buildSortedDirStructure(sortingDir + '1 - OT Orders/')
+        os.mkdir(sortingDir + '2 - Late Orders/')
+        buildSortedDirStructure(sortingDir + '2 - Late Orders/')
+    if Path(sortingDir + '2 - Today/').exists() == True:
+        os.mkdir(sortingDir + '3 - Today')
+        buildSortedDirStructure(sortingDir + '3 - Today')
+    if Path(sortingDir + '3 - Future/').exists() == True:
+        os.mkdir(sortingDir + '4 - Future')
+        buildSortedDirStructure(sortingDir + '4 - Future')
+    return
 
 def moveForDueDates():
     print('\n| Updating Orders. Today\'s date:', today)
@@ -1940,10 +1979,10 @@ def cropMultiPanelPDFs(printPDFToSplit):
 
     print('| File has been split apart, cropped, and recombined.\n| File:', splitAndCombinedPDF.split('/')[-1])
 
-    if Path(calderaDir + 'z_Storage/Original Files/').exists() == False:
-        os.mkdir(calderaDir + 'z_Storage/Original Files')
+    if Path(calderaDir + '# Past Orders/Original Files/').exists() == False:
+        os.mkdir(calderaDir + '# Past Orders/Original Files')
     
-    storageDir = calderaDir + 'z_Storage/Original Files/'
+    storageDir = calderaDir + '# Past Orders/Original Files/'
     
     try:
         shutil.move(printPDFToSplit, storageDir)
@@ -1978,10 +2017,20 @@ def decompress_pdf(temp_buffer):
 
     return StringIO(stdout)
 
-def buildABatch(batchDir, material, materialLength):
+def possibleOrders(material, orderSize):
+    for printPDF in glob.iglob():
+        return
+
+def buildABatch(batchDir, material, materialLength, orderSize):
     lateAndOTOrders = sortingDir + '1 - Late and OT/' + dirLookupDict[material] + dirLookupDict[orderSize]
     todayOrders = sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
     futureOrders = sortingDir + '3 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
+
+    materialLength = materialLength
+    batchLength = 0
+    lengthForFull = materialLength * 0.85
+    
+    possibleOrders = possibleOrders(material, orderSize)
 
     '''
     Lets do some pseudo code!
@@ -2001,5 +2050,6 @@ def buildABatch(batchDir, material, materialLength):
 
     return
 
+startupChecks()
 main()
 ## End
