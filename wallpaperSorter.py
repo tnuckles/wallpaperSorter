@@ -191,17 +191,32 @@ def buildSortedDirStructure(parentFolder):
 
 def checkOrderDirectoryStructure():
     if Path(calderaDir + '# Past Orders/Original Files/').exists() == False:
-       os.mkdir(calderaDir + '# Past Orders/Original Files')
+        try:
+            os.mkdir(calderaDir + '# Past Orders/Original Files')
+        except:
+            pass
     if Path(sortingDir + '1 - Late and OT/').exists() == True:
-        os.mkdir(sortingDir + '1 - OT Orders/')
+        try:
+            os.mkdir(sortingDir + '1 - OT Orders/')
+        except:
+            pass
         buildSortedDirStructure(sortingDir + '1 - OT Orders/')
-        os.mkdir(sortingDir + '2 - Late Orders/')
+        try:
+            os.mkdir(sortingDir + '2 - Late Orders/')
+        except:
+            pass
         buildSortedDirStructure(sortingDir + '2 - Late Orders/')
-    if Path(sortingDir + '2 - Today/').exists() == True:
-        os.mkdir(sortingDir + '3 - Today/')
+    if Path(sortingDir + '3 - Today/').exists() == True:
+        try:
+            os.mkdir(sortingDir + '3 - Today/')
+        except:
+            pass
         buildSortedDirStructure(sortingDir + '3 - Today/')
-    if Path(sortingDir + '3 - Future/').exists() == True:
-        os.mkdir(sortingDir + '4 - Future/')
+    if Path(sortingDir + '4 - Future/').exists() == True:
+        try:
+            os.mkdir(sortingDir + '4 - Future/')
+        except:
+            pass
         buildSortedDirStructure(sortingDir + '4 - Future/')
     return
 
@@ -216,11 +231,11 @@ def moveForDueDates():
         oddOrEven = int(fileName.split('-')[9].split(' ')[1]) % 2   
         orderLength = float(fileName.split('-')[11].split('L')[1])
         if orderDueDate < today:
-            orderDueDate = '1 - Late and OT/'
+            orderDueDate = '2 - Late/'
         elif orderDueDate > today:
-            orderDueDate = '3 - Future/'
+            orderDueDate = '4 - Future/'
         else:
-            orderDueDate = '2 - Today/'
+            orderDueDate = '3 - Today/'
          # Checks if order is over the maximum length of a roll and moves it to Needs Attention
         if material == 'Wv':
             if orderLength >= dirLookupDict['MaterialLength']['Woven']:
@@ -366,7 +381,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
                     'Width': width,
                     'Height': height,
                     'OT Notes': orderTroubleNotes,
-                    'File Path': sortingDir + '1 - Late and OT/' + dirLookupDict[paperType] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + dirLookupDict[int(quantity) % 2] + newPDFName,
+                    'File Path': sortingDir + '2 - Late/' + dirLookupDict[paperType] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + dirLookupDict[int(quantity) % 2] + newPDFName,
                 }
             else:
                 orderItemsDict[orderNumber] = {
@@ -383,7 +398,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
                         'Width': width,
                         'Height': height,
                         'OT Notes': orderTroubleNotes,
-                        'File Path': sortingDir + '1 - Late and OT/' + dirLookupDict[paperType] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + dirLookupDict[int(quantity) % 2] + newPDFName,
+                        'File Path': sortingDir + '2 - Late/' + dirLookupDict[paperType] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + dirLookupDict[int(quantity) % 2] + newPDFName,
                     }
                 }
                     
@@ -427,7 +442,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
                     'Width': width,
                     'Height': height,
                     'OT Notes': orderTroubleNotes,
-                    'File Path': sortingDir + '1 - Late and OT/' + dirLookupDict[paperType] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + dirLookupDict[int(quantity) % 2] + newPDFName,
+                    'File Path': sortingDir + '2 - Late/' + dirLookupDict[paperType] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + dirLookupDict[int(quantity) % 2] + newPDFName,
                 }
         else:
             orderItemsDict[orderNumber] = {
@@ -444,7 +459,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
                     'Width': width,
                     'Height': height,
                     'OT Notes': orderTroubleNotes,
-                    'File Path': sortingDir + '1 - Late and OT/' + dirLookupDict[paperType] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + dirLookupDict[int(quantity) % 2] + newPDFName,
+                    'File Path': sortingDir + '2 - Late/' + dirLookupDict[paperType] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + dirLookupDict[int(quantity) % 2] + newPDFName,
                 }
             }
     
@@ -545,7 +560,7 @@ def sortPDFsByDetails():
         if orderSize == 'Samp':
             if dueDate < date.today():
                 try:
-                    shutil.copy(file, sortingDir + '1 - Late and OT/' + dirLookupDict[material] +dirLookupDict[orderSize])
+                    shutil.copy(file, sortingDir + '2 - Late/' + dirLookupDict[material] +dirLookupDict[orderSize])
                     try:
                         os.remove(file)
                     except:
@@ -554,7 +569,7 @@ def sortPDFsByDetails():
                     print(err)
             elif dueDate > date.today():
                 try:
-                    shutil.copy(file, sortingDir + '3 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize])
+                    shutil.copy(file, sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize])
                     try:
                         os.remove(file)
                     except:
@@ -563,7 +578,7 @@ def sortPDFsByDetails():
                     print(err)
             else:
                 try:
-                    shutil.copy(file, sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize])
+                    shutil.copy(file, sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize])
                     try:
                         os.remove(file)
                     except:
@@ -573,7 +588,7 @@ def sortPDFsByDetails():
         else:
             if dueDate < date.today():
                 try:
-                    shutil.copy(file, sortingDir + '1 - Late and OT/' + dirLookupDict[material] +dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][repeat] + dirLookupDict[oddOrEven])
+                    shutil.copy(file, sortingDir + '2 - Late/' + dirLookupDict[material] +dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][repeat] + dirLookupDict[oddOrEven])
                     try:
                         os.remove(file)
                     except:
@@ -582,7 +597,7 @@ def sortPDFsByDetails():
                     print(err)
             elif dueDate > date.today():
                 try:
-                    shutil.copy(file, sortingDir + '3 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][repeat] + dirLookupDict[oddOrEven])
+                    shutil.copy(file, sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][repeat] + dirLookupDict[oddOrEven])
                     try:
                         os.remove(file)
                     except:
@@ -591,7 +606,7 @@ def sortPDFsByDetails():
                     print(err)
             else:
                 try:
-                    shutil.copy(file, sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][repeat] + dirLookupDict[oddOrEven])
+                    shutil.copy(file, sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] + dirLookupDict['RepeatDict'][repeat] + dirLookupDict[oddOrEven])
                     try:
                         os.remove(file)
                     except:
@@ -776,13 +791,14 @@ def removeOldOrders(folderToClean, days): #removes folders and contents older th
                 continue
 
 def findSampleOrdersForPrint(batchDir, material, orderSize, materialLength):
-    lateAndOTOrders = sortingDir + '1 - Late and OT/' + dirLookupDict[material] + dirLookupDict[orderSize]
-    todayOrders = sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
-    futureOrders = sortingDir + '3 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
+    futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
     curBatchDirLength = 0
     oddCount = 1
     if (curBatchDirLength < (materialLength - 10)):
-        for sample in glob.iglob(lateAndOTOrders + '*.pdf'):
+        for sample in glob.iglob(lateOrders + '*.pdf'):
             if (curBatchDirLength + float(sample.split('/')[9].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
                 newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
                 os.rename(batchDir, batchFoldersDir + newBatchName)
@@ -865,13 +881,14 @@ def findSampleOrdersForPrint(batchDir, material, orderSize, materialLength):
     return
 
 def findFullRp2EvenOrdersForPrint(batchDir, material, orderSize, materialLength):
-    lateAndOTOrders = sortingDir + '1 - Late and OT/' + dirLookupDict[material] + dirLookupDict[orderSize]
-    todayOrders = sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
-    futureOrders = sortingDir + '3 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
+    futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
     curBatchDirLength = 0
     while len(glob.glob(sortingDir + '*/'+ dirLookupDict[material] + dirLookupDict[orderSize] + 'Repeat 2/Even Panels/*.pdf'))>0:
         if (curBatchDirLength < (materialLength - 0.85)):
-            for order in glob.iglob(lateAndOTOrders + 'Repeat 2/Even Panels/*.pdf'):
+            for order in glob.iglob(lateOrders + 'Repeat 2/Even Panels/*.pdf'):
                 if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
                     newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
                     os.rename(batchDir, batchFoldersDir + newBatchName)
@@ -932,14 +949,15 @@ def findFullRp2EvenOrdersForPrint(batchDir, material, orderSize, materialLength)
     return
 
 def findFullRp2OddOrdersForPrint(batchDir, material, orderSize, materialLength):
-    lateAndOTOrders = sortingDir + '1 - Late and OT/' + dirLookupDict[material] + dirLookupDict[orderSize]
-    todayOrders = sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
-    futureOrders = sortingDir + '3 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
+    futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
     curBatchDirLength = 0
     oddCount = 0
     oddCountHeight = 0
     if (curBatchDirLength < (materialLength - 0.85)):
-        for order in glob.iglob(lateAndOTOrders + 'Repeat 2/Odd Panels/*.pdf'):
+        for order in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*.pdf'):
             if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
                 newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
                 os.rename(batchDir, batchFoldersDir + newBatchName)
@@ -948,7 +966,7 @@ def findFullRp2OddOrdersForPrint(batchDir, material, orderSize, materialLength):
                 return findFullRp2OddOrdersForPrint(batchDir, material, orderSize, dirLookupDict['MaterialLength'][material])
             else:
                 currentOrderLength = order.split('/')[11].split('-')[13]
-                for orderToMatch in glob.iglob(lateAndOTOrders + 'Repeat 2/Odd Panels/*' + currentOrderLength): #don't need to include the .pdf in the filename here as it's included in currentOrderLength
+                for orderToMatch in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*' + currentOrderLength): #don't need to include the .pdf in the filename here as it's included in currentOrderLength
                     if (curBatchDirLength + (float(order.split('/')[11].split('-')[11].split('L')[1]) + float(orderToMatch.split('/')[11].split('-')[11].split('L')[1])) - float(orderToMatch.split('/')[11].split('-')[13].split('H')[1].split('.pdf'))[0] > (materialLength * 1.01)): 
                         continue
                     else:
@@ -976,7 +994,7 @@ def findFullRp2OddOrdersForPrint(batchDir, material, orderSize, materialLength):
                         oddCountHeight = float(order.split('/')[11].split('-')[13].split('H')[1].split('.pdf')[0])
                     else:
                         while oddCount == 1:
-                            for oddOrder in glob.iglob(lateAndOTOrders + 'Repeat 2/Odd Panels/*H' + str(oddCountHeight) +'.pdf'):
+                            for oddOrder in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*H' + str(oddCountHeight) +'.pdf'):
                                 if (curBatchDirLength + float(oddOrder.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
                                     continue
                                 else:
@@ -1006,7 +1024,7 @@ def findFullRp2OddOrdersForPrint(batchDir, material, orderSize, materialLength):
                         oddCountHeight = float(order.split('/')[11].split('-')[13].split('H')[1].split('.pdf')[0])
                     else:
                         while oddCount == 1:
-                            for oddOrder in glob.iglob(lateAndOTOrders + 'Repeat 2/Odd Panels/*H' + str(oddCountHeight) +'.pdf'):
+                            for oddOrder in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*H' + str(oddCountHeight) +'.pdf'):
                                 if (curBatchDirLength + float(oddOrder.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
                                     continue
                                 else:
@@ -1089,11 +1107,11 @@ def transferFilesFromDrive():
                 print('| Source: ', driveLocation)
                 if orderSize == 'Full':
                     try:
-                        shutil.move(driveLocation + '/' + file, sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize]+ orderRepeat + orderQuantity)
+                        shutil.move(driveLocation + '/' + file, sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize]+ orderRepeat + orderQuantity)
                         time.sleep(2)
                         print('| Successfully transferred! File:', file)
                     except shutil.Error:
-                        shutil.copy(driveLocation + '/' + file, sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize]+ orderRepeat + orderQuantity)
+                        shutil.copy(driveLocation + '/' + file, sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize]+ orderRepeat + orderQuantity)
                         try:
                             os.remove(driveLocation + '/' + file)
                             time.sleep(2)
@@ -1104,11 +1122,11 @@ def transferFilesFromDrive():
                         print(err)    
                 elif orderSize == 'Samp':
                     try:
-                        shutil.move(driveLocation + '/' + file, sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize])
+                        shutil.move(driveLocation + '/' + file, sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize])
                         time.sleep(2)
                         print('| Successfully transferred! File:', file)
                     except shutil.Error:
-                        shutil.copy(driveLocation + '/' + file, sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize])
+                        shutil.copy(driveLocation + '/' + file, sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize])
                         try:
                             os.remove(driveLocation + '/' + file)
                             time.sleep(2)
@@ -1118,7 +1136,7 @@ def transferFilesFromDrive():
                         except OSError as err:
                             print(err)
                     except PermissionError:
-                        shutil.copy(driveLocation + '/' + file, sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize])
+                        shutil.copy(driveLocation + '/' + file, sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize])
                         try:
                             os.remove(driveLocation + '/' + file)
                             time.sleep(2)
@@ -1286,9 +1304,10 @@ def removeEmptyBatchFolders(safe):
                 os.rmdir(batchFolder)
 
 def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
-    lateAndOTOrders = sortingDir + '1 - Late and OT/' + dirLookupDict[material] + dirLookupDict[orderSize]
-    todayOrders = sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
-    futureOrders = sortingDir + '3 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
+    futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
     foldersToCheck2p = glob.glob(sortingDir + '*/' + dirLookupDict[material] + dirLookupDict[orderSize] + 'Repeat 2/*/*.pdf')
     curBatchDirLength = 0
     findOdd = False
@@ -1298,7 +1317,7 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
         ### Come back to this later. For some reason, the folders to check variable doesn't update so python always evaluates it to more than 0 after it's initially created. I plugged in a loop counter to temporarily fix it.
         #foldersToCheck = glob.glob(sortingDir + '*/' + dirLookupDict[material] + dirLookupDict[orderSize] + 'Repeat 2/*/*.pdf')
         while (curBatchDirLength < (materialLength - 0.9)) and loopCounter < 1:
-            for order in glob.iglob(lateAndOTOrders + 'Repeat 2/*/*.pdf'):
+            for order in glob.iglob(lateOrders + 'Repeat 2/*/*.pdf'):
                 orderLength = float(order.split('/')[-1].split('-')[11].split('L')[1])
                 orderOdd = int(order.split('/')[-1].split('-')[9].split('Qty ')[1])
                 orderHeight = float(order.split('/')[-1].split('-')[-1].split('H')[1].split('.pdf')[0])
@@ -1572,9 +1591,10 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
             return findOrdersForPrint2Ptv2(batchDir, material, orderSize, int(materialLength))
 
 def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
-    lateAndOTOrders = sortingDir + '1 - Late and OT/' + dirLookupDict[material] + dirLookupDict[orderSize]
-    todayOrders = sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
-    futureOrders = sortingDir + '3 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
+    futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
     foldersToCheckN2p = glob.glob(sortingDir + '*/' + dirLookupDict[material] + dirLookupDict[orderSize] + 'Repeat Non-2/*/*.pdf')
     curBatchDirLength = 0
     findOdd = False
@@ -1584,7 +1604,7 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
         ### Come back to this later. For some reason, the folders to check variable doesn't update so python always evaluates it to more than 0 after it's initially created. I plugged in a loop counter to temporarily fix it.
         #foldersToCheck = glob.glob(sortingDir + '*/' + dirLookupDict[material] + dirLookupDict[orderSize] + 'Repeat 2/*/*.pdf')
         while (curBatchDirLength < (materialLength - 0.9)) and loopCounter < 1:
-            for order in glob.iglob(lateAndOTOrders + 'Repeat Non-2/*/*.pdf'):
+            for order in glob.iglob(lateOrders + 'Repeat Non-2/*/*.pdf'):
                 orderLength = float(order.split('/')[-1].split('-')[11].split('L')[1])
                 orderOdd = int(order.split('/')[-1].split('-')[9].split('Qty ')[1])
                 orderHeight = float(order.split('/')[-1].split('-')[-1].split('H')[1].split('.pdf')[0])
@@ -2022,9 +2042,10 @@ def possibleOrders(material, orderSize):
         return
 
 def buildABatch(batchDir, material, materialLength, orderSize):
-    lateAndOTOrders = sortingDir + '1 - Late and OT/' + dirLookupDict[material] + dirLookupDict[orderSize]
-    todayOrders = sortingDir + '2 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
-    futureOrders = sortingDir + '3 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
+    futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
 
     materialLength = materialLength
     batchLength = 0
