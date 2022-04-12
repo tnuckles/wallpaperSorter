@@ -206,13 +206,13 @@ def checkOrderDirectoryStructure():
         except:
             pass
         buildSortedDirStructure(sortingDir + '2 - Late Orders/')
-    if Path(sortingDir + '3 - Today/').exists() == True:
+    if Path(sortingDir + '2 - Today/').exists() == True:
         try:
             os.mkdir(sortingDir + '3 - Today/')
         except:
             pass
         buildSortedDirStructure(sortingDir + '3 - Today/')
-    if Path(sortingDir + '4 - Future/').exists() == True:
+    if Path(sortingDir + '3 - Future/').exists() == True:
         try:
             os.mkdir(sortingDir + '4 - Future/')
         except:
