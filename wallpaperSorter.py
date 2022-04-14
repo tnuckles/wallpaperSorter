@@ -19,11 +19,11 @@ else:
 
 orderdb = calderaDir + 'z_Storage/z_WallpaperDB/lvdOrderDatabase.sqlite'
 ordersDict = SqliteDict(orderdb, autocommit=True)
-batchCounterDB = calderaDir + 'z_Storage/z_WallpaperDB/lvdGlobalBatchCounter.sqlite'
-globalBatchCounter = SqliteDict(batchCounterDB, autocommit=True)
-#globalBatchCounter['batchCounter'] = 1
+QueueCounterDB = calderaDir + 'z_Storage/z_WallpaperDB/lvdGlobalQueueCounter.sqlite'
+globalQueueCounter = SqliteDict(QueueCounterDB, autocommit=True)
+#globalQueueCounter['QueueCounter'] = 1
 
-batchFoldersDir = calderaDir + '2 Batch Folders/'
+QueueFoldersDir = calderaDir + '2 Queue Folders/'
 downloadDir = calderaDir + '3 Downloaded/'
 needsAttention = calderaDir + '4 Needs Attention/'
 sortingDir = calderaDir + '5 Sorted for Print/'
@@ -99,9 +99,9 @@ def main():
     print('\n| Main Menu')
     print('| 1. Sort Orders')
     print('| 2. Download Orders from Google Drive')
-    print('| 3. Batch Orders')
+    print('| 3. Queue Orders')
     print('| 4. Update Sorting Based on Due Dates')
-    print('| 6. Test Batches')
+    print('| 6. Test Queues')
     print('| 5. Quit')
     try:
         command = int(input('\n| Command > '))
@@ -124,13 +124,13 @@ def main():
         transferFilesFromDrive()
         return main()
     elif command == 3:
-        batchOrdersMain()
+        QueueOrdersMain()
         return main()
     elif command == 4:
         moveForDueDates()
         return main()
     elif command == 6:
-        buildABatch('Batch 1', 'Smooth', 150, 'Full')
+        buildAQueue('Queue 1', 'Smooth', 150, 'Full')
         return main()
     elif command == 5:
         print('\n| Goodbye!')
@@ -141,8 +141,8 @@ def main():
             print('| Prepping folders for test.')
             fullOrPartialRun = input('| Do you want to do a full run? > ')
             if fullOrPartialRun == 'y':
-                shutil.rmtree(batchFoldersDir)
-                os.mkdir(batchFoldersDir)
+                shutil.rmtree(QueueFoldersDir)
+                os.mkdir(QueueFoldersDir)
                 shutil.rmtree(downloadDir)
                 shutil.copytree('/Users/Trevor/Desktop/Backup/Downloaded', downloadDir)
                 # shutil.rmtree(sortingDir)
@@ -157,18 +157,18 @@ def main():
                 shutil.rmtree('/Volumes/GoogleDrive/Shared drives/# Production/#LvD Test Fulfillment')
                 shutil.copytree('/Volumes/GoogleDrive/Shared drives/# Production/#LvD Fulfillment', '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Test Fulfillment')
                 transferFilesFromDrive()
-            buildABatch('Batch 1', 'Smooth', 150, 'Full')
+            buildAQueue('Queue 1', 'Smooth', 150, 'Full')
             return main()
     print('\n| Job\'s Done!')
 
 def startupChecks():
     checkOrderDirectoryStructure()
-    checkBatchCounter()
+    checkQueueCounter()
     moveForDueDates()
 
-def checkBatchCounter():
-    if globalBatchCounter['batchCounter'] > 9000:
-        globalBatchCounter['batchCounter'] = 1
+def checkQueueCounter():
+    if globalQueueCounter['QueueCounter'] > 9000:
+        globalQueueCounter['QueueCounter'] = 1
 
 def buildSortedDirStructure(parentFolder):
     os.mkdir(parentFolder + 'Smooth/')
@@ -686,96 +686,96 @@ def buildDBSadNoises():
             }
     print('| DB Built.')
 
-def batchOrdersMain():
+def QueueOrdersMain():
     options = 1,2,3,4,5,0
-    print('\n| Main Menu > Batch Orders')
-    print('| 1. Batch Smooth Full')
-    print('| 2. Batch Smooth Samples')
-    print('| 3. Batch Woven Full')
-    print('| 4. Batch Woven Samples')
-    print('| 5. Combine Batches')
+    print('\n| Main Menu > Queue Orders')
+    print('| 1. Queue Smooth Full')
+    print('| 2. Queue Smooth Samples')
+    print('| 3. Queue Woven Full')
+    print('| 4. Queue Woven Samples')
+    print('| 5. Combine Queues')
     print('| 0. Return to Main Menu.')
     try:
         command = int(input('\n| Command > '))
     except ValueError:
         print('\n| Please enter a number, not text.')
-        return batchOrdersMain()
+        return QueueOrdersMain()
     while int(command) not in options:
         print('\n| Not a valid choice.')
-        return batchOrdersMain()
+        return QueueOrdersMain()
     if command == 1:
-        confirm = confirmBatch('Smooth', 'Full')
+        confirm = confirmQueue('Smooth', 'Full')
         if confirm == True:
-            batchingController('Smooth', 'Full')
-            return batchOrdersMain()
+            QueueingController('Smooth', 'Full')
+            return QueueOrdersMain()
         elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return batchOrdersMain()
+            print('\n| Returning to Queue Orders.')
+            return QueueOrdersMain()
     elif command == 2:
-        confirm = confirmBatch('Smooth', 'Sample')
+        confirm = confirmQueue('Smooth', 'Sample')
         if confirm == True:
-            batchingController('Smooth', 'Sample')
-            return batchOrdersMain()
+            QueueingController('Smooth', 'Sample')
+            return QueueOrdersMain()
         elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return batchOrdersMain()
+            print('\n| Returning to Queue Orders.')
+            return QueueOrdersMain()
     elif command == 3:
-        confirm = confirmBatch('Woven', 'Full')
+        confirm = confirmQueue('Woven', 'Full')
         if confirm == True:
-            batchingController('Woven', 'Full')
-            return batchOrdersMain()
+            QueueingController('Woven', 'Full')
+            return QueueOrdersMain()
         elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return batchOrdersMain()
+            print('\n| Returning to Queue Orders.')
+            return QueueOrdersMain()
     elif command == 4:
-        confirm = confirmBatch('Woven', 'Sample')
+        confirm = confirmQueue('Woven', 'Sample')
         if confirm == True:
-            batchingController('Woven', 'Sample')
-            return batchOrdersMain()
+            QueueingController('Woven', 'Sample')
+            return QueueOrdersMain()
         elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return batchOrdersMain()
+            print('\n| Returning to Queue Orders.')
+            return QueueOrdersMain()
     elif command == 5:
         material = input('| Material please > ')
-        combineBatchFoldersController(material)
+        combineQueueFoldersController(material)
     elif command == 0:
         print('| Returning to Main Menu.')
         return main()
 
-def confirmBatch(material, orderSize):
+def confirmQueue(material, orderSize):
     options = 1,2
-    print('\n| Confirm: Batch', material, orderSize, 'PDFs?')
+    print('\n| Confirm: Queue', material, orderSize, 'PDFs?')
     print('| 1. Yes')
     print('| 2. No')
     try:
         command = int(input('| Command > '))
     except ValueError:
         print('\n| Please enter a number, not text.')
-        return confirmBatch(material, orderSize)
+        return confirmQueue(material, orderSize)
     while int(command) not in options:
         print('\n| Not a valid choice.')
-        return confirmBatch(material, orderSize)
+        return confirmQueue(material, orderSize)
     if command == 1:
         return True
     elif command == 2:
         return False
 
-def batchingController(material, orderSize):
-    print('\n| Starting', material, orderSize, 'Full Batching.')
+def QueueingController(material, orderSize):
+    print('\n| Starting', material, orderSize, 'Full Queueing.')
     materialLength = int(input('\n| Please input your starting material length in feet > '))
     # while materialLength != type(int):
     #     materialLength = int(input('\n| Please input your starting material length in feet > '))
-    batchDir = batchDirBuilder(material, orderSize)
+    QueueDir = QueueDirBuilder(material, orderSize)
     if orderSize == 'Full':
-        findOrdersForPrint2Ptv2(batchDir, material, orderSize, (int(materialLength)*12))
-        removeEmptyBatchFolders(True)
-        #combineBatchFoldersController(material)
-        batchDir = batchDirBuilder(material, orderSize)
-        findOrdersForPrint4Ptv2(batchDir, material, orderSize, (int(materialLength)*12))
-        removeEmptyBatchFolders(True)
+        findOrdersForPrint2Ptv2(QueueDir, material, orderSize, (int(materialLength)*12))
+        removeEmptyQueueFolders(True)
+        #combineQueueFoldersController(material)
+        QueueDir = QueueDirBuilder(material, orderSize)
+        findOrdersForPrint4Ptv2(QueueDir, material, orderSize, (int(materialLength)*12))
+        removeEmptyQueueFolders(True)
     else:
-        findSampleOrdersForPrint(batchDir, material, orderSize, (int(materialLength * 12)))
-    print('\n| Finished batching', material, orderSize, 'orders.')
+        findSampleOrdersForPrint(QueueDir, material, orderSize, (int(materialLength * 12)))
+    print('\n| Finished Queueing', material, orderSize, 'orders.')
 
 def removeOldOrders(folderToClean, days): #removes folders and contents older than X days
     olderThanDays = days
@@ -792,152 +792,152 @@ def removeOldOrders(folderToClean, days): #removes folders and contents older th
             except ValueError:
                 continue
 
-def findSampleOrdersForPrint(batchDir, material, orderSize, materialLength):
+def findSampleOrdersForPrint(QueueDir, material, orderSize, materialLength):
     OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
     lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
     todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
     futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
-    curBatchDirLength = 0
+    curQueueDirLength = 0
     oddCount = 1
-    if (curBatchDirLength < (materialLength - 10)):
+    if (curQueueDirLength < (materialLength - 10)):
         for sample in glob.iglob(lateOrders + '*.pdf'):
-            if (curBatchDirLength + float(sample.split('/')[9].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-                os.rename(batchDir, batchFoldersDir + newBatchName)
-                print('\n| Batch with OT/Late Orders Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-                batchDir = batchDirBuilder(material, orderSize)
+            if (curQueueDirLength + float(sample.split('/')[9].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
+                newQueueName = QueueDir.split('/')[6].split(' L')[0] + ' L' + str(curQueueDirLength)
+                os.rename(QueueDir, QueueFoldersDir + newQueueName)
+                print('\n| Queue with OT/Late Orders Finished.\n| Queue Folder: ', newQueueName, '\n| Length:', str(round(curQueueDirLength/12, 2)), 'feet (' + str(curQueueDirLength), 'inches)')
+                QueueDir = QueueDirBuilder(material, orderSize)
                 materialLength = input('| Please input your material length. > ')
-                return findSampleOrdersForPrint(batchDir, material, orderSize, int(materialLength)*12)
-                # return findSampleOrdersForPrint(batchDir, material, orderSize, dirLookupDict['MaterialLength'][material])
+                return findSampleOrdersForPrint(QueueDir, material, orderSize, int(materialLength)*12)
+                # return findSampleOrdersForPrint(QueueDir, material, orderSize, dirLookupDict['MaterialLength'][material])
             else:
                 try:
-                    shutil.move(sample, batchDir)
+                    shutil.move(sample, QueueDir)
                     if oddCount == 0:
-                        curBatchDirLength += float(sample.split('/')[9].split('-')[11].split('L')[1])
+                        curQueueDirLength += float(sample.split('/')[9].split('-')[11].split('L')[1])
                         oddCount = 1
                     else:
                         oddCount = 0
                 except shutil.Error:
-                    shutil.copy(sample, batchDir)
+                    shutil.copy(sample, QueueDir)
                     try:
                         os.remove(sample)
                     except OSError:
                         print('|> Could not remove ' + sample)
                 except FileNotFoundError:
                     print('|> Couldn\'t find sample to move. \n|> File: ', sample)
-    if (curBatchDirLength < (materialLength - 10)):
+    if (curQueueDirLength < (materialLength - 10)):
         for sample in glob.iglob(todayOrders + '*.pdf'):
-            if (curBatchDirLength + float(sample.split('/')[9].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-                os.rename(batchDir, batchFoldersDir + newBatchName)
-                print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-                batchDir = batchDirBuilder(material, orderSize)
+            if (curQueueDirLength + float(sample.split('/')[9].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
+                newQueueName = QueueDir.split('/')[6].split(' L')[0] + ' L' + str(curQueueDirLength)
+                os.rename(QueueDir, QueueFoldersDir + newQueueName)
+                print('\n| Queue Finished.\n| Queue Folder: ', newQueueName, '\n| Length:', str(round(curQueueDirLength/12, 2)), 'feet (' + str(curQueueDirLength), 'inches)')
+                QueueDir = QueueDirBuilder(material, orderSize)
                 materialLength = input('| Please input your material length. > ')
-                return findSampleOrdersForPrint(batchDir, material, orderSize, int(materialLength)*12)
-                # return findSampleOrdersForPrint(batchDir, material, orderSize, dirLookupDict['MaterialLength'][material])
+                return findSampleOrdersForPrint(QueueDir, material, orderSize, int(materialLength)*12)
+                # return findSampleOrdersForPrint(QueueDir, material, orderSize, dirLookupDict['MaterialLength'][material])
             else:
                 try:
-                    shutil.move(sample, batchDir)
+                    shutil.move(sample, QueueDir)
                     if oddCount == 0:
-                        curBatchDirLength += float(sample.split('/')[9].split('-')[11].split('L')[1])
+                        curQueueDirLength += float(sample.split('/')[9].split('-')[11].split('L')[1])
                         oddCount = 1
                     else:
                         oddCount = 0
                 except shutil.Error:
-                    shutil.copy(sample, batchDir)
+                    shutil.copy(sample, QueueDir)
                     try:
                         os.remove(sample)
                     except OSError:
                         print('|> Could not remove ' + sample)
                 except FileNotFoundError:
                     print('|> Couldn\'t find sample to move. \n|> File: ', sample)
-    if (curBatchDirLength < (materialLength - 10)):
+    if (curQueueDirLength < (materialLength - 10)):
         for sample in glob.iglob(futureOrders + '*.pdf'):
-            if (curBatchDirLength + float(sample.split('/')[9].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-                os.rename(batchDir, batchFoldersDir + newBatchName)
-                print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-                batchDir = batchDirBuilder(material, orderSize)
+            if (curQueueDirLength + float(sample.split('/')[9].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
+                newQueueName = QueueDir.split('/')[6].split(' L')[0] + ' L' + str(curQueueDirLength)
+                os.rename(QueueDir, QueueFoldersDir + newQueueName)
+                print('\n| Queue Finished.\n| Queue Folder: ', newQueueName, '\n| Length:', str(round(curQueueDirLength/12, 2)), 'feet (' + str(curQueueDirLength), 'inches)')
+                QueueDir = QueueDirBuilder(material, orderSize)
                 materialLength = input('| Please input your material length. > ')
-                return findSampleOrdersForPrint(batchDir, material, orderSize, int(materialLength)*12)
-                # return findSampleOrdersForPrint(batchDir, material, orderSize, dirLookupDict['MaterialLength'][material])
+                return findSampleOrdersForPrint(QueueDir, material, orderSize, int(materialLength)*12)
+                # return findSampleOrdersForPrint(QueueDir, material, orderSize, dirLookupDict['MaterialLength'][material])
             else:
                 try:
-                    shutil.move(sample, batchDir)
+                    shutil.move(sample, QueueDir)
                     if oddCount == 0:
-                        curBatchDirLength += float(sample.split('/')[9].split('-')[11].split('L')[1])
+                        curQueueDirLength += float(sample.split('/')[9].split('-')[11].split('L')[1])
                         oddCount = 1
                     else:
                         oddCount = 0
                 except shutil.Error:
-                    shutil.copy(sample, batchDir)
+                    shutil.copy(sample, QueueDir)
                     try:
                         os.remove(sample)
                     except OSError:
                         print('|> Could not remove ' + sample)
                 except FileNotFoundError:
                     print('|> Couldn\'t find sample to move. \n|> File: ', sample)                
-    newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-    print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-    os.rename(batchDir, batchFoldersDir + newBatchName)
+    newQueueName = QueueDir.split('/')[6].split(' L')[0] + ' L' + str(curQueueDirLength)
+    print('\n| Queue Finished.\n| Queue Folder: ', newQueueName, '\n| Length:', str(round(curQueueDirLength/12, 2)), 'feet (' + str(curQueueDirLength), 'inches)')
+    os.rename(QueueDir, QueueFoldersDir + newQueueName)
     return
 
-def findFullRp2EvenOrdersForPrint(batchDir, material, orderSize, materialLength):
+def findFullRp2EvenOrdersForPrint(QueueDir, material, orderSize, materialLength):
     OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
     lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
     todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
     futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
-    curBatchDirLength = 0
+    curQueueDirLength = 0
     while len(glob.glob(sortingDir + '*/'+ dirLookupDict[material] + dirLookupDict[orderSize] + 'Repeat 2/Even Panels/*.pdf'))>0:
-        if (curBatchDirLength < (materialLength - 0.85)):
+        if (curQueueDirLength < (materialLength - 0.85)):
             for order in glob.iglob(lateOrders + 'Repeat 2/Even Panels/*.pdf'):
-                if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                    newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-                    os.rename(batchDir, batchFoldersDir + newBatchName)
-                    print('\n| Batch with OT/Late Orders Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-                    batchDir = batchDirBuilder(material, orderSize)
-                    return findFullRp2EvenOrdersForPrint(batchDir, material, orderSize, dirLookupDict['MaterialLength'][material])
+                if (curQueueDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
+                    newQueueName = QueueDir.split('/')[6].split(' L')[0] + ' L' + str(curQueueDirLength)
+                    os.rename(QueueDir, QueueFoldersDir + newQueueName)
+                    print('\n| Queue with OT/Late Orders Finished.\n| Queue Folder: ', newQueueName, '\n| Length:', str(round(curQueueDirLength/12, 2)), 'feet (' + str(curQueueDirLength), 'inches)')
+                    QueueDir = QueueDirBuilder(material, orderSize)
+                    return findFullRp2EvenOrdersForPrint(QueueDir, material, orderSize, dirLookupDict['MaterialLength'][material])
                 else:
                     try:
-                        shutil.move(order, batchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
+                        shutil.move(order, QueueDir)
+                        curQueueDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
                     except shutil.Error:
-                        shutil.copy(order, batchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
+                        shutil.copy(order, QueueDir)
+                        curQueueDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
                         try:
                             os.remove(order)
                         except OSError:
                             print('|> Could not remove ' + order)
                     except FileNotFoundError:
                         print('|> Couldn\'t find order to move. \n|> File: ', order)
-        if (curBatchDirLength < (materialLength - 0.85)):
+        if (curQueueDirLength < (materialLength - 0.85)):
             for order in glob.iglob(todayOrders + 'Repeat 2/Even Panels/*.pdf'):
-                if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
+                if (curQueueDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
                     continue
                 else:
                     try:
-                        shutil.move(order, batchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
+                        shutil.move(order, QueueDir)
+                        curQueueDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
                     except shutil.Error:
-                        shutil.copy(order, batchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
+                        shutil.copy(order, QueueDir)
+                        curQueueDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
                         try:
                             os.remove(order)
                         except OSError:
                             print('|> Could not remove ' + order)
                     except FileNotFoundError:
                         print('|> Couldn\'t find order to move. \n|> File: ', order)
-        if (curBatchDirLength < (materialLength - 0.85)):
+        if (curQueueDirLength < (materialLength - 0.85)):
             for order in glob.iglob(futureOrders + 'Repeat 2/Even Panels/*.pdf'):
-                if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
+                if (curQueueDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
                     continue
                 else:
                     try:
-                        shutil.move(order, batchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
+                        shutil.move(order, QueueDir)
+                        curQueueDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
                     except shutil.Error:
-                        shutil.copy(order, batchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
+                        shutil.copy(order, QueueDir)
+                        curQueueDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
                         try:
                             os.remove(order)
                         except OSError:
@@ -945,98 +945,98 @@ def findFullRp2EvenOrdersForPrint(batchDir, material, orderSize, materialLength)
                     except FileNotFoundError:
                         print('|> Couldn\'t find order to move. \n|> File: ', order)    
     
-    newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-    print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-    os.rename(batchDir, batchFoldersDir + newBatchName)
+    newQueueName = QueueDir.split('/')[6].split(' L')[0] + ' L' + str(curQueueDirLength)
+    print('\n| Queue Finished.\n| Queue Folder: ', newQueueName, '\n| Length:', str(round(curQueueDirLength/12, 2)), 'feet (' + str(curQueueDirLength), 'inches)')
+    os.rename(QueueDir, QueueFoldersDir + newQueueName)
     return
 
-def findFullRp2OddOrdersForPrint(batchDir, material, orderSize, materialLength):
+def findFullRp2OddOrdersForPrint(QueueDir, material, orderSize, materialLength):
     OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
     lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
     todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
     futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
-    curBatchDirLength = 0
+    curQueueDirLength = 0
     oddCount = 0
     oddCountHeight = 0
-    if (curBatchDirLength < (materialLength - 0.85)):
+    if (curQueueDirLength < (materialLength - 0.85)):
         for order in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*.pdf'):
-            if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-                os.rename(batchDir, batchFoldersDir + newBatchName)
-                batchDir = batchDirBuilder(material, orderSize)
-                print('| ' + batchDir)
-                return findFullRp2OddOrdersForPrint(batchDir, material, orderSize, dirLookupDict['MaterialLength'][material])
+            if (curQueueDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
+                newQueueName = QueueDir.split('/')[6].split(' L')[0] + ' L' + str(curQueueDirLength)
+                os.rename(QueueDir, QueueFoldersDir + newQueueName)
+                QueueDir = QueueDirBuilder(material, orderSize)
+                print('| ' + QueueDir)
+                return findFullRp2OddOrdersForPrint(QueueDir, material, orderSize, dirLookupDict['MaterialLength'][material])
             else:
                 currentOrderLength = order.split('/')[11].split('-')[13]
                 for orderToMatch in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*' + currentOrderLength): #don't need to include the .pdf in the filename here as it's included in currentOrderLength
-                    if (curBatchDirLength + (float(order.split('/')[11].split('-')[11].split('L')[1]) + float(orderToMatch.split('/')[11].split('-')[11].split('L')[1])) - float(orderToMatch.split('/')[11].split('-')[13].split('H')[1].split('.pdf'))[0] > (materialLength * 1.01)): 
+                    if (curQueueDirLength + (float(order.split('/')[11].split('-')[11].split('L')[1]) + float(orderToMatch.split('/')[11].split('-')[11].split('L')[1])) - float(orderToMatch.split('/')[11].split('-')[13].split('H')[1].split('.pdf'))[0] > (materialLength * 1.01)): 
                         continue
                     else:
                         try:
-                            shutil.move(order, batchDir)
-                            shutil.move(orderToMatch, batchDir)
+                            shutil.move(order, QueueDir)
+                            shutil.move(orderToMatch, QueueDir)
                         except shutil.Error:
-                            shutil.copy(order, batchDir)
+                            shutil.copy(order, QueueDir)
                             try:
                                 os.remove(order)
                             except OSError:
                                 print('|> Could not remove ' + order)
                         except FileNotFoundError:
                             print('|> Couldn\'t find order to move. \n|> File: ', order)
-    if (curBatchDirLength < (materialLength - 0.85)):
+    if (curQueueDirLength < (materialLength - 0.85)):
         for order in glob.iglob(todayOrders + 'Repeat 2/Odd Panels/*.pdf'):
-            if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
+            if (curQueueDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
                 continue
             else:
                 try:
-                    shutil.move(order, batchDir)
+                    shutil.move(order, QueueDir)
                     if oddCount == 0:
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
+                        curQueueDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
                         oddCount = 1
                         oddCountHeight = float(order.split('/')[11].split('-')[13].split('H')[1].split('.pdf')[0])
                     else:
                         while oddCount == 1:
                             for oddOrder in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*H' + str(oddCountHeight) +'.pdf'):
-                                if (curBatchDirLength + float(oddOrder.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
+                                if (curQueueDirLength + float(oddOrder.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
                                     continue
                                 else:
-                                    shutil.move(oddOrder, batchDir)
+                                    shutil.move(oddOrder, QueueDir)
                                     oddCount = 0
                                     oddCountHeight = 0
                             print('| Couldn\'t find any matching, odd-paneled heights.')
                             oddCount = 0        
                 except shutil.Error:
-                    shutil.copy(order, batchDir)
+                    shutil.copy(order, QueueDir)
                     try:
                         os.remove(order)
                     except OSError:
                         print('|> Could not remove ' + order)
                 except FileNotFoundError:
                     print('|> Couldn\'t find order to move. \n|> File: ', order)
-    if (curBatchDirLength < (materialLength - 0.85)):
+    if (curQueueDirLength < (materialLength - 0.85)):
         for order in glob.iglob(futureOrders + 'Repeat 2/Odd Panels/*.pdf'):
-            if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
+            if (curQueueDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
                 continue
             else:
                 try:
-                    shutil.move(order, batchDir)
+                    shutil.move(order, QueueDir)
                     if oddCount == 0:
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
+                        curQueueDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
                         oddCount = 1
                         oddCountHeight = float(order.split('/')[11].split('-')[13].split('H')[1].split('.pdf')[0])
                     else:
                         while oddCount == 1:
                             for oddOrder in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*H' + str(oddCountHeight) +'.pdf'):
-                                if (curBatchDirLength + float(oddOrder.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
+                                if (curQueueDirLength + float(oddOrder.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
                                     continue
                                 else:
-                                    shutil.move(oddOrder, batchDir)
+                                    shutil.move(oddOrder, QueueDir)
                                     oddCount = 0
                                     oddCountHeight = 0
                             print('| Couldn\'t find any matching, odd-paneled heights.')
                             oddCount = 0        
                 except shutil.Error:
-                    shutil.copy(order, batchDir)
+                    shutil.copy(order, QueueDir)
                     try:
                         os.remove(order)
                     except OSError:
@@ -1150,67 +1150,67 @@ def transferFilesFromDrive():
     print('\n| Finished transferring files from Google Drive.')
     return main()
 
-def batchDirBuilder(material, orderSize):
-    batchDir = batchFoldersDir + 'Batch #' + str(globalBatchCounter['batchCounter']) + ' ' + today.strftime('%m-%d-%y') + ' ' + material + ' ' + orderSize + ' L0'
-    globalBatchCounter['batchCounter'] += 1
-    #batchDir = doesDirExist(material, orderSize)
-    os.mkdir(batchDir)
-    print('| New Batch Folder: Batch #' + str(globalBatchCounter['batchCounter']-1))
+def QueueDirBuilder(material, orderSize):
+    QueueDir = QueueFoldersDir + 'Queue #' + str(globalQueueCounter['QueueCounter']) + ' ' + today.strftime('%m-%d-%y') + ' ' + material + ' ' + orderSize + ' L0'
+    globalQueueCounter['QueueCounter'] += 1
+    #QueueDir = doesDirExist(material, orderSize)
+    os.mkdir(QueueDir)
+    print('| New Queue Folder: Queue #' + str(globalQueueCounter['QueueCounter']-1))
     print()
-    return batchDir
+    return QueueDir
 
-def batchMaterialSelector():
+def QueueMaterialSelector():
     print('\n| Please select a material type: \n| 1. Smooth\n| 2. Woven')#\n| 3. Traditional (Don\'t.)')
     options = 1,2,3
     try:
         material = int(input('| Which material do you want to make? > '))
     except ValueError:
         print('\n| Please enter a number, not text.')
-        return batchMaterialSelector()
+        return QueueMaterialSelector()
     while int(material) not in options:
         print('\n| Not a valid choice.')
-        return batchMaterialSelector()
+        return QueueMaterialSelector()
     if material == 1:
         return 'Smooth'
     elif material == 2:
         return 'Woven'
     elif material == 3:
         print('Traditional? No.')
-        return batchMaterialSelector()
+        return QueueMaterialSelector()
     else:
         print('| Invalid material choice. Returning.')
-        return batchMaterialSelector()
+        return QueueMaterialSelector()
 
-def batchOrderSizeSelector():
+def QueueOrderSizeSelector():
     print('\n| Please select a material size: \n| 1. Sample\n| 2. Full')
     options = 1,2
     try:
         orderSize = int(input('| Which size do you want to make? > '))
     except ValueError:
         print('\n| Please enter a number, not text.')
-        return batchOrderSizeSelector()
+        return QueueOrderSizeSelector()
     while int(orderSize) not in options:
         print('\n| Not a valid choice.')
-        return batchOrderSizeSelector()
+        return QueueOrderSizeSelector()
     if orderSize == 1:
         return 'Sample'
     elif orderSize == 2:
         return 'Full'
     else:
         print('| Invalid size choice. Returning.')
-        return batchOrderSizeSelector()
+        return QueueOrderSizeSelector()
 
-def batchMaterialLengthSelector():
-    print('| Do you want to choose the length of material for each batch, only the first, or consider all batches full length? \n| 1. Each Batch\n| 2. Only the First\n| 3. All Full Length')
+def QueueMaterialLengthSelector():
+    print('| Do you want to choose the length of material for each Queue, only the first, or consider all Queues full length? \n| 1. Each Queue\n| 2. Only the First\n| 3. All Full Length')
     options = 1,2,3
     try:
         orderSize = int(input('| Please make a selection: > '))
     except ValueError:
         print('\n| Please enter a number, not text.')
-        return batchMaterialLengthSelector()
+        return QueueMaterialLengthSelector()
     while int(orderSize) not in options:
         print('\n| Not a valid choice.')
-        return batchMaterialLengthSelector()
+        return QueueMaterialLengthSelector()
     if orderSize == 1:
         orderSize = 'Each'
     elif orderSize == 2:
@@ -1219,57 +1219,57 @@ def batchMaterialLengthSelector():
         orderSize = 'Full'
     else:
         print('| Invalid size choice. Returning.')
-        return batchMaterialLengthSelector()
+        return QueueMaterialLengthSelector()
 
-def combineBatchFoldersController(material):
+def combineQueueFoldersController(material):
     loopCounter = 0
     while loopCounter < 3:
         loopCounter += 1
-        findBatchFoldersToCombine(material)
+        findQueueFoldersToCombine(material)
         
 def getMaterialLength(material):
     try:
-        materialLength = int(input('\n| Combining Full ' + material + ' batch folders.\n| Please enter a material length > ')) * 12
+        materialLength = int(input('\n| Combining Full ' + material + ' Queue folders.\n| Please enter a material length > ')) * 12
         return materialLength
     except ValueError:
         print('\n| Please enter a number, not text.')
         return getMaterialLength()
 
-def findBatchFoldersToCombine(material):
+def findQueueFoldersToCombine(material):
   
     materialLength = getMaterialLength(material)
 
-    for batchFolder in glob.iglob(batchFoldersDir + '*' + material + ' Full*'):
-        batchLength = float(batchFolder.split('/')[-1].split(' ')[-1].split('L')[1])
-        # Checks if Batch Order Length is less that 85% of the specified Material Length
-        if batchLength < (materialLength * .85):
-            # If it is less than 85%, then it begins to iterate through other batch folders to find ones to combine.
-            for batchFolderToJoin in glob.iglob(batchFoldersDir + '*' + material + ' Full*'):
-                batchLengthToJoin = float(batchFolderToJoin.split('/')[-1].split(' ')[-1].split('L')[1])
-                # If the batch folder and the potential folder to join are the same folder, skips that iteration.
-                if batchFolderToJoin == batchFolder:
+    for QueueFolder in glob.iglob(QueueFoldersDir + '*' + material + ' Full*'):
+        QueueLength = float(QueueFolder.split('/')[-1].split(' ')[-1].split('L')[1])
+        # Checks if Queue Order Length is less that 85% of the specified Material Length
+        if QueueLength < (materialLength * .85):
+            # If it is less than 85%, then it begins to iterate through other Queue folders to find ones to combine.
+            for QueueFolderToJoin in glob.iglob(QueueFoldersDir + '*' + material + ' Full*'):
+                QueueLengthToJoin = float(QueueFolderToJoin.split('/')[-1].split(' ')[-1].split('L')[1])
+                # If the Queue folder and the potential folder to join are the same folder, skips that iteration.
+                if QueueFolderToJoin == QueueFolder:
                     continue
-                # If the total length of the batch folder and the potential folder to join is less than the material length, iteratethrough batch folder to join and moves each pdf to the original folder.
-                if batchLength + batchLengthToJoin < materialLength:
-                    combineBatchFolders(batchFolder, batchLength, batchFolderToJoin, batchLengthToJoin, material)
+                # If the total length of the Queue folder and the potential folder to join is less than the material length, iteratethrough Queue folder to join and moves each pdf to the original folder.
+                if QueueLength + QueueLengthToJoin < materialLength:
+                    combineQueueFolders(QueueFolder, QueueLength, QueueFolderToJoin, QueueLengthToJoin, material)
 
-def combineBatchFolders(batchFolder, batchLength, batchFolderToJoin, batchLengthToJoin, material):
-    combinedBatchDir = batchDirBuilder(material, 'Full')
+def combineQueueFolders(QueueFolder, QueueLength, QueueFolderToJoin, QueueLengthToJoin, material):
+    combinedQueueDir = QueueDirBuilder(material, 'Full')
 
-    for printPDF in glob.iglob(batchFolder + '/*.pdf'):
+    for printPDF in glob.iglob(QueueFolder + '/*.pdf'):
         try:
-            shutil.move(printPDF, combinedBatchDir)
+            shutil.move(printPDF, combinedQueueDir)
         except shutil.Error:
-            shutil.copy(printPDF, combinedBatchDir)
+            shutil.copy(printPDF, combinedQueueDir)
             try:
                 os.remove(printPDF)
             except OSError:
                 print('|> Could not remove', printPDF.split('/')[-1])
-    for printPDF in glob.iglob(batchFolderToJoin + '/*.pdf'):
+    for printPDF in glob.iglob(QueueFolderToJoin + '/*.pdf'):
         try:
-            shutil.move(printPDF, combinedBatchDir)
+            shutil.move(printPDF, combinedQueueDir)
         except shutil.Error:
-            shutil.copy(printPDF, combinedBatchDir)
+            shutil.copy(printPDF, combinedQueueDir)
             try:
                 os.remove(printPDF)
             except OSError:
@@ -1277,48 +1277,48 @@ def combineBatchFolders(batchFolder, batchLength, batchFolderToJoin, batchLength
 
     evenLengths = []
     #oddLengths = ()
-    newBatchLength = 0
+    newQueueLength = 0
 
-    for printPDF in glob.iglob(combinedBatchDir + '/*.pdf'):
+    for printPDF in glob.iglob(combinedQueueDir + '/*.pdf'):
         printPDFLength = float(printPDF.split('/')[-1].split('-')[11].split('L')[1])
         evenLengths.append(printPDFLength)
 
     for lengthEntry in evenLengths:
-        newBatchLength += lengthEntry
+        newQueueLength += lengthEntry
     
-    newBatchName = combinedBatchDir.split('/')[6].split(' L')[0] + ' L' + str(newBatchLength)
-    os.rename(combinedBatchDir, batchFoldersDir + newBatchName)
-    removeEmptyBatchFolders(False)
-    return combineBatchFoldersController(material)
+    newQueueName = combinedQueueDir.split('/')[6].split(' L')[0] + ' L' + str(newQueueLength)
+    os.rename(combinedQueueDir, QueueFoldersDir + newQueueName)
+    removeEmptyQueueFolders(False)
+    return combineQueueFoldersController(material)
 
-def removeEmptyBatchFolders(safe):
-    for batchFolder in glob.iglob(batchFoldersDir + '*'):
-        batchLength = float(batchFolder.split('/')[-1].split(' ')[-1].split('L')[1])
+def removeEmptyQueueFolders(safe):
+    for QueueFolder in glob.iglob(QueueFoldersDir + '*'):
+        QueueLength = float(QueueFolder.split('/')[-1].split(' ')[-1].split('L')[1])
         if safe == True:
-            if os.path.isdir(batchFolder) == False:
+            if os.path.isdir(QueueFolder) == False:
                 continue
-            elif (len(os.listdir(batchFolder)) == 0) and (batchLength == 0):
-                os.rmdir(batchFolder)
+            elif (len(os.listdir(QueueFolder)) == 0) and (QueueLength == 0):
+                os.rmdir(QueueFolder)
         else:
-            if os.path.isdir(batchFolder) == False:
+            if os.path.isdir(QueueFolder) == False:
                 continue
-            elif (len(os.listdir(batchFolder)) == 0):
-                os.rmdir(batchFolder)
+            elif (len(os.listdir(QueueFolder)) == 0):
+                os.rmdir(QueueFolder)
 
-def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
+def findOrdersForPrint2Ptv2(QueueDir, material, orderSize, materialLength):
     OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
     lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
     todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
     futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
     foldersToCheck2p = glob.glob(sortingDir + '*/' + dirLookupDict[material] + dirLookupDict[orderSize] + 'Repeat 2/*/*.pdf')
-    curBatchDirLength = 0
+    curQueueDirLength = 0
     findOdd = False
     oddMatchHeight = 0
     loopCounter = 0
     while len(foldersToCheck2p) > 0:
         ### Come back to this later. For some reason, the folders to check variable doesn't update so python always evaluates it to more than 0 after it's initially created. I plugged in a loop counter to temporarily fix it.
         #foldersToCheck = glob.glob(sortingDir + '*/' + dirLookupDict[material] + dirLookupDict[orderSize] + 'Repeat 2/*/*.pdf')
-        while (curBatchDirLength < (materialLength - 0.9)) and loopCounter < 1:
+        while (curQueueDirLength < (materialLength - 0.9)) and loopCounter < 1:
             for order in glob.iglob(lateOrders + 'Repeat 2/*/*.pdf'):
                 orderLength = float(order.split('/')[-1].split('-')[11].split('L')[1])
                 orderOdd = int(order.split('/')[-1].split('-')[9].split('Qty ')[1])
@@ -1327,24 +1327,24 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
                     print('| Order is too large to add to this order.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
-                elif (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                elif (curQueueDirLength + orderLength) > (materialLength * 1.02):
                     print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
                 else:
                     if (findOdd == False) and (orderOdd % 2 == 0):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue    
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                                 try:
                                     os.remove(order)
@@ -1353,19 +1353,19 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
                             except FileNotFoundError:
                                 print('|> Couldn\'t find order to move. \n|> File: ', order)
                     elif (findOdd == False) and (orderOdd % 2 == 1):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                                 try:
@@ -1380,19 +1380,19 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
                         if oddMatchHeight != orderHeight:
                             continue
                         else:
-                            if (curBatchDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
+                            if (curQueueDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
                                 print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                                 print('| Continuing.')
                                 continue
                             else:
                                 try:
-                                    shutil.move(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.move(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                 except shutil.Error:
-                                    shutil.copy(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.copy(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                     try:
@@ -1409,24 +1409,24 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
                     print('| Order is too large to add to this order.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
-                elif (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                elif (curQueueDirLength + orderLength) > (materialLength * 1.02):
                     print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
                 else:
                     if (findOdd == False) and (orderOdd % 2 == 0):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue    
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                                 try:
                                     os.remove(order)
@@ -1435,19 +1435,19 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
                             except FileNotFoundError:
                                 print('|> Couldn\'t find order to move. \n|> File: ', order)
                     elif (findOdd == False) and (orderOdd % 2 == 1):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                                 try:
@@ -1462,19 +1462,19 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
                         if oddMatchHeight != orderHeight:
                             continue
                         else:
-                            if (curBatchDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
+                            if (curQueueDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
                                 print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                                 print('| Continuing.')
                                 continue
                             else:
                                 try:
-                                    shutil.move(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.move(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                 except shutil.Error:
-                                    shutil.copy(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.copy(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                     try:
@@ -1491,24 +1491,24 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
                     print('| Order is too large to add to this order.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
-                elif (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                elif (curQueueDirLength + orderLength) > (materialLength * 1.02):
                     print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
                 else:
                     if (findOdd == False) and (orderOdd % 2 == 0):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue    
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                                 try:
                                     os.remove(order)
@@ -1517,19 +1517,19 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
                             except FileNotFoundError:
                                 print('|> Couldn\'t find order to move. \n|> File: ', order)
                     elif (findOdd == False) and (orderOdd % 2 == 1):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                                 try:
@@ -1544,19 +1544,19 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
                         if oddMatchHeight != orderHeight:
                             continue
                         else:
-                            if (curBatchDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
+                            if (curQueueDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
                                 print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                                 print('| Continuing.')
                                 continue
                             else:
                                 try:
-                                    shutil.move(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.move(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                 except shutil.Error:
-                                    shutil.copy(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.copy(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                     try:
@@ -1567,13 +1567,13 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
                                     print('|> Couldn\'t find order to move. \n|> File: ', order)
                     else:
                         try:
-                            shutil.move(order, batchDir)
-                            curBatchDirLength += (orderLength - (orderHeight+0.5))
+                            shutil.move(order, QueueDir)
+                            curQueueDirLength += (orderLength - (orderHeight+0.5))
                             findOdd = False
                             oddMatchHeight = 0
                         except shutil.Error:
-                            shutil.copy(order, batchDir)
-                            curBatchDirLength += (orderLength - (orderHeight+0.5))
+                            shutil.copy(order, QueueDir)
+                            curQueueDirLength += (orderLength - (orderHeight+0.5))
                             findOdd = False
                             oddMatchHeight = 0
                             try:
@@ -1584,28 +1584,28 @@ def findOrdersForPrint2Ptv2(batchDir, material, orderSize, materialLength):
                             print('|> Couldn\'t find order to move. \n|> File: ', order)
             loopCounter += 1
         else:
-            newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-            os.rename(batchDir, batchFoldersDir + newBatchName)
-            print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-            curBatchDirLength = 0
-            batchDir = batchDirBuilder(material, orderSize)
+            newQueueName = QueueDir.split('/')[6].split(' L')[0] + ' L' + str(curQueueDirLength)
+            os.rename(QueueDir, QueueFoldersDir + newQueueName)
+            print('\n| Queue Finished.\n| Queue Folder: ', newQueueName, '\n| Length:', str(round(curQueueDirLength/12, 2)), 'feet (' + str(curQueueDirLength), 'inches)')
+            curQueueDirLength = 0
+            QueueDir = QueueDirBuilder(material, orderSize)
             #materialLength = input('| Please input your material length. > ')
-            return findOrdersForPrint2Ptv2(batchDir, material, orderSize, int(materialLength))
+            return findOrdersForPrint2Ptv2(QueueDir, material, orderSize, int(materialLength))
 
-def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
+def findOrdersForPrint4Ptv2(QueueDir, material, orderSize, materialLength):
     OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
     lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
     todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
     futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
     foldersToCheckN2p = glob.glob(sortingDir + '*/' + dirLookupDict[material] + dirLookupDict[orderSize] + 'Repeat Non-2/*/*.pdf')
-    curBatchDirLength = 0
+    curQueueDirLength = 0
     findOdd = False
     oddMatchHeight = 0
     loopCounter = 0
     while len(foldersToCheckN2p) > 0:
         ### Come back to this later. For some reason, the folders to check variable doesn't update so python always evaluates it to more than 0 after it's initially created. I plugged in a loop counter to temporarily fix it.
         #foldersToCheck = glob.glob(sortingDir + '*/' + dirLookupDict[material] + dirLookupDict[orderSize] + 'Repeat 2/*/*.pdf')
-        while (curBatchDirLength < (materialLength - 0.9)) and loopCounter < 1:
+        while (curQueueDirLength < (materialLength - 0.9)) and loopCounter < 1:
             for order in glob.iglob(lateOrders + 'Repeat Non-2/*/*.pdf'):
                 orderLength = float(order.split('/')[-1].split('-')[11].split('L')[1])
                 orderOdd = int(order.split('/')[-1].split('-')[9].split('Qty ')[1])
@@ -1614,24 +1614,24 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
                     print('| Order is too large to add to this order.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
-                elif (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                elif (curQueueDirLength + orderLength) > (materialLength * 1.02):
                     print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
                 else:
                     if (findOdd == False) and (orderOdd % 2 == 0):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue    
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                                 try:
                                     os.remove(order)
@@ -1640,19 +1640,19 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
                             except FileNotFoundError:
                                 print('|> Couldn\'t find order to move. \n|> File: ', order)
                     elif (findOdd == False) and (orderOdd % 2 == 1):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                                 try:
@@ -1667,19 +1667,19 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
                         if oddMatchHeight != orderHeight:
                             continue
                         else:
-                            if (curBatchDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
+                            if (curQueueDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
                                 print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                                 print('| Continuing.')
                                 continue
                             else:
                                 try:
-                                    shutil.move(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.move(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                 except shutil.Error:
-                                    shutil.copy(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.copy(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                     try:
@@ -1696,24 +1696,24 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
                     print('| Order is too large to add to this order.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
-                elif (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                elif (curQueueDirLength + orderLength) > (materialLength * 1.02):
                     print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
                 else:
                     if (findOdd == False) and (orderOdd % 2 == 0):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue    
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                                 try:
                                     os.remove(order)
@@ -1722,19 +1722,19 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
                             except FileNotFoundError:
                                 print('|> Couldn\'t find order to move. \n|> File: ', order)
                     elif (findOdd == False) and (orderOdd % 2 == 1):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                                 try:
@@ -1749,19 +1749,19 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
                         if oddMatchHeight != orderHeight:
                             continue
                         else:
-                            if (curBatchDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
+                            if (curQueueDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
                                 print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                                 print('| Continuing.')
                                 continue
                             else:
                                 try:
-                                    shutil.move(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.move(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                 except shutil.Error:
-                                    shutil.copy(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.copy(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                     try:
@@ -1778,24 +1778,24 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
                     print('| Order is too large to add to this order.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
-                elif (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                elif (curQueueDirLength + orderLength) > (materialLength * 1.02):
                     print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                     print('| Continuing.')
                     continue
                 else:
                     if (findOdd == False) and (orderOdd % 2 == 0):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue    
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = False
                                 try:
                                     os.remove(order)
@@ -1804,19 +1804,19 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
                             except FileNotFoundError:
                                 print('|> Couldn\'t find order to move. \n|> File: ', order)
                     elif (findOdd == False) and (orderOdd % 2 == 1):
-                        if (curBatchDirLength + orderLength) > (materialLength * 1.02):
+                        if (curQueueDirLength + orderLength) > (materialLength * 1.02):
                             print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                             print('| Continuing.')
                             continue
                         else:
                             try:
-                                shutil.move(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.move(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                             except shutil.Error:
-                                shutil.copy(order, batchDir)
-                                curBatchDirLength += orderLength
+                                shutil.copy(order, QueueDir)
+                                curQueueDirLength += orderLength
                                 findOdd = True
                                 oddMatchHeight = orderHeight
                                 try:
@@ -1831,19 +1831,19 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
                         if oddMatchHeight != orderHeight:
                             continue
                         else:
-                            if (curBatchDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
+                            if (curQueueDirLength + (orderLength - orderHeight)) > (materialLength * 1.02):
                                 print('| Order will exceed material length.\n| File:', order.split('/')[-1])
                                 print('| Continuing.')
                                 continue
                             else:
                                 try:
-                                    shutil.move(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.move(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                 except shutil.Error:
-                                    shutil.copy(order, batchDir)
-                                    curBatchDirLength += (orderLength - (orderHeight+0.5))
+                                    shutil.copy(order, QueueDir)
+                                    curQueueDirLength += (orderLength - (orderHeight+0.5))
                                     findOdd = False
                                     oddMatchHeight = 0
                                     try:
@@ -1854,13 +1854,13 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
                                     print('|> Couldn\'t find order to move. \n|> File: ', order)
                     else:
                         try:
-                            shutil.move(order, batchDir)
-                            curBatchDirLength += (orderLength - (orderHeight+0.5))
+                            shutil.move(order, QueueDir)
+                            curQueueDirLength += (orderLength - (orderHeight+0.5))
                             findOdd = False
                             oddMatchHeight = 0
                         except shutil.Error:
-                            shutil.copy(order, batchDir)
-                            curBatchDirLength += (orderLength - (orderHeight+0.5))
+                            shutil.copy(order, QueueDir)
+                            curQueueDirLength += (orderLength - (orderHeight+0.5))
                             findOdd = False
                             oddMatchHeight = 0
                             try:
@@ -1871,12 +1871,12 @@ def findOrdersForPrint4Ptv2(batchDir, material, orderSize, materialLength):
                             print('|> Couldn\'t find order to move. \n|> File: ', order)
             loopCounter += 1
         else:
-            newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-            os.rename(batchDir, batchFoldersDir + newBatchName)
-            print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-            batchDir = batchDirBuilder(material, orderSize)
+            newQueueName = QueueDir.split('/')[6].split(' L')[0] + ' L' + str(curQueueDirLength)
+            os.rename(QueueDir, QueueFoldersDir + newQueueName)
+            print('\n| Queue Finished.\n| Queue Folder: ', newQueueName, '\n| Length:', str(round(curQueueDirLength/12, 2)), 'feet (' + str(curQueueDirLength), 'inches)')
+            QueueDir = QueueDirBuilder(material, orderSize)
             #materialLength = input('| Please input your material length. > ')
-            return findOrdersForPrint4Ptv2(batchDir, material, orderSize, int(materialLength))
+            return findOrdersForPrint4Ptv2(QueueDir, material, orderSize, int(materialLength))
 
 def checkRepeatSize():
     for printPDF in glob.iglob(downloadDir + '*.pdf'):
@@ -2063,13 +2063,13 @@ def possibleOrders(material, orderSize):
             
     return possibleOrders
 
-def buildABatch(batchDir, material, materialLength, orderSize):
+def buildAQueue(QueueDir, material, materialLength, orderSize):
     # OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
     # lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
     # todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
     # futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
 
-    batchLength = 0
+    QueueLength = 0
     lengthForFull = materialLength * 0.85
     
     readyToPrint = possibleOrders(material, orderSize)
@@ -2079,18 +2079,27 @@ def buildABatch(batchDir, material, materialLength, orderSize):
         for order in readyToPrint[dueDate]:
             print('|----', order.split('/')[-1].split('-')[0], order.split('/')[-1].split('-')[7], dirLookupDict[order.split('/')[-1].split('-')[6]].split('/')[0])
 
-    print('| Creating Batches for Order Troubles and Late Orders.')
+    orderTroubles = readyToPrint['Order Troubles']
+    lateOrders = readyToPrint['Late Orders']
+    todayOrders = readyToPrint['Today\'s Orders']
+    futureOrders = readyToPrint['Future Orders']
+
+    if (len(orderTroubles) > 0) and (len(lateOrders) > 0):
+        print('| Creating Queues for Order Troubles and Late Orders.')
+        mainBuildQueueLoop(orderTroubles, )  
+
+
 
 
     '''
     Lets do some pseudo code!
     First, get the total length of material (let's say 150 for smooth)
     then, look for full 2' repeat orders 
-    add them to the current batch until the batch length is 
-    repeat until batch is 85% of material length OR until there are no more full, 2' repeat orders
+    add them to the current Queue until the Queue length is 
+    repeat until Queue is 85% of material length OR until there are no more full, 2' repeat orders
     once 85% of material length is exceeded, search for 13% worth of samples OR until there are no additional samples
     once that 13% has been met or exceeded, add 5% of color guides.
-    Once that 5% has been met, complete the batch.
+    Once that 5% has been met, complete the Queue.
 
     '''
 
@@ -2099,6 +2108,17 @@ def buildABatch(batchDir, material, materialLength, orderSize):
     # findColorGuides()
 
     return
+
+def mainBuildQueueLoop(listOfPdfsToQueue, materialLength, lengthForFull,):
+    curQueue
+    
+    while lengthForFull < materialLength:
+        for printPDF in listOfPdfsToQueue:
+            pdfName = printPDF.split('/'[-1]).split('.pdf')[0]
+            pdfLength = float(pdfName.split('-')[11].split('L')[1])
+            pdfOdd = int(pdfName.split('-')[9].split('Qty ')[1])
+            pdfHeight = float(pdfName.split('-')[-1].split('H')[1])
+            if 
 
 startupChecks()
 main()
