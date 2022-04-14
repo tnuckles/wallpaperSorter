@@ -130,7 +130,7 @@ def main():
         moveForDueDates()
         return main()
     elif command == 6:
-        buildABatch('Batch 1', 'Smooth', 150, 'Full')
+        buildBatchController('Batch 1', 'Smooth', 150, 'Full')
         return main()
     elif command == 5:
         print('\n| Goodbye!')
@@ -2039,31 +2039,49 @@ def decompress_pdf(temp_buffer):
 
     return StringIO(stdout)
 
-def possibleOrders(material, orderSize):
+def possibleOrders():
     OTOrders = glob.iglob(sortingDir + '1 - OT Orders/' + '**/*.pdf', recursive=True)
     lateOrders = glob.iglob(sortingDir + '2 - Late/' + '**/*.pdf', recursive=True)
     todayOrders = glob.iglob(sortingDir + '3 - Today/' + '**/*.pdf', recursive=True) 
     futureOrders = glob.iglob(sortingDir + '4 - Future/' + '**/*.pdf', recursive=True)
     
     possibleOrders = {
-            'Order Troubles' : [],
-            'Late Orders' : [],
-            'Today\'s Orders' : [],
-            'Future Orders' : [],
+            'Wv' : {
+                'orderTroubles' : [],
+                'lateOrders' : [],
+                'todaysOrders' : [],
+                'futureOrders' : [],
+            },
+            'Sm' : {
+                'orderTroubles' : [],
+                'lateOrders' : [],
+                'todaysOrders' : [],
+                'futureOrders' : [],
+            },
+            'Tr' : {
+                'orderTroubles' : [],
+                'lateOrders' : [],
+                'todaysOrders' : [],
+                'futureOrders' : [],
+            },
         }
 
     for printPDF in OTOrders:
-        possibleOrders['Order Troubles'].append(printPDF)
+        pdfMaterial = printPDF.split('/')[-1].split('-')[6]
+        possibleOrders[pdfMaterial]['orderTroubles'].append(printPDF)
     for printPDF in lateOrders:
-        possibleOrders['Late Orders'].append(printPDF)
+        pdfMaterial = printPDF.split('/')[-1].split('-')[6]
+        possibleOrders[pdfMaterial]['lateOrders'].append(printPDF)
     for printPDF in todayOrders:
-        possibleOrders['Today\'s Orders'].append(printPDF)
+        pdfMaterial = printPDF.split('/')[-1].split('-')[6]
+        possibleOrders[pdfMaterial]['todaysOrders'].append(printPDF)
     for printPDF in futureOrders:
-        possibleOrders['Future Orders'].append(printPDF)
+        pdfMaterial = printPDF.split('/')[-1].split('-')[6]
+        possibleOrders[pdfMaterial]['futureOrders'].append(printPDF)
             
     return possibleOrders
 
-def buildABatch(material, materialLength, orderSize):
+def buildBatchController(material, materialLength):
     # OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
     # lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
     # todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
@@ -2072,64 +2090,7 @@ def buildABatch(material, materialLength, orderSize):
     BatchLength = 0
     lengthForFull = materialLength * 0.85
     
-    readyToPrint = possibleOrders(material, orderSize)
-    
-    orderTroubles = readyToPrint['Order Troubles']
-    lateOrders = readyToPrint['Late Orders']
-    todayOrders = readyToPrint['Today\'s Orders']
-    futureOrders = readyToPrint['Future Orders']
-    
-    orderTroublesWoven = []
-    orderTroublesSmooth = []
-    orderTroublesTraditional = []
-
-    lateOrdersWoven = []
-    lateOrdersSmooth = []
-    lateOrdersTraditional = []
-
-    todayOrdersWoven = []
-    todayOrdersSmooth = []
-    todayOrdersTraditional = []
-    
-    futureOrdersWoven = []
-    futureOrdersSmooth = []
-    futureOrdersTraditional = []
-
-    for printPdf in orderTroubles:
-        pdfMaterial = printPdf.split('/')[-1].split('-')[6]
-        if pdfMaterial == 'Wv':
-            orderTroublesWoven.append(printPdf)
-        elif pdfMaterial == 'Sm':
-            orderTroublesSmooth.append(printPdf)
-        elif pdfMaterial == 'Tr':
-            orderTroublesTraditional.append(printPdf)
-    
-    for printPdf in lateOrders:
-        pdfMaterial = printPdf.split('/')[-1].split('-')[6]
-        if pdfMaterial == 'Wv':
-            lateOrdersWoven.append(printPdf)
-        elif pdfMaterial == 'Sm':
-            lateOrdersSmooth.append(printPdf)
-        elif pdfMaterial == 'Tr':
-            lateOrdersTraditional.append(printPdf)
-    
-    for printPdf in todayOrders:
-        pdfMaterial = printPdf.split('/')[-1].split('-')[6]
-        if pdfMaterial == 'Wv':
-            todayOrdersWoven.append(printPdf)
-        elif pdfMaterial == 'Sm':
-            todayOrdersSmooth.append(printPdf)
-        elif pdfMaterial == 'Tr':
-            todayOrdersTraditional.append(printPdf)
-    
-    for printPdf in futureOrders:
-        pdfMaterial = printPdf.split('/')[-1].split('-')[6]
-        if pdfMaterial == 'Wv':
-            futureOrdersWoven.append(printPdf)
-        elif pdfMaterial == 'Sm':
-            futureOrdersSmooth.append(printPdf)
-        elif pdfMaterial == 'Tr':
-            futureOrdersTraditional.append(printPdf)
+    readyToPrint = possibleOrders()
 
     BatchDir = BatchFoldersDir + 'Batch Being Built'
     os.mkdir(BatchDir)
@@ -2196,7 +2157,6 @@ def mainBuildBatchLoop(listOfPdfsToBatch, adjustedMaterialLength, BatchDir):
                             findOdd = False
                             oddMatchHeight = 0
         loopCounter += 1
-
 
 def tryToMovePDF(printPDF, BatchDir, friendlyPdfName, pdfLength):
     try:
