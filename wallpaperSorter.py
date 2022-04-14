@@ -101,6 +101,7 @@ def main():
     print('| 2. Download Orders from Google Drive')
     print('| 3. Batch Orders')
     print('| 4. Update Sorting Based on Due Dates')
+    print('| 6. Test Batches')
     print('| 5. Quit')
     try:
         command = int(input('\n| Command > '))
@@ -128,9 +129,9 @@ def main():
     elif command == 4:
         moveForDueDates()
         return main()
-    #elif command == 5:
-    #    findOrdersForPrint2Ptv2()
-    #    return main()
+    elif command == 6:
+        buildABatch('Batch 1', 'Smooth', 150, 'Full')
+        return main()
     elif command == 5:
         print('\n| Goodbye!')
         pass
@@ -156,6 +157,7 @@ def main():
                 shutil.rmtree('/Volumes/GoogleDrive/Shared drives/# Production/#LvD Test Fulfillment')
                 shutil.copytree('/Volumes/GoogleDrive/Shared drives/# Production/#LvD Fulfillment', '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Test Fulfillment')
                 transferFilesFromDrive()
+            buildABatch('Batch 1', 'Smooth', 150, 'Full')
             return main()
     print('\n| Job\'s Done!')
 
@@ -202,10 +204,10 @@ def checkOrderDirectoryStructure():
             pass
         buildSortedDirStructure(sortingDir + '1 - OT Orders/')
         try:
-            os.mkdir(sortingDir + '2 - Late Orders/')
+            os.mkdir(sortingDir + '2 - Late/')
         except:
             pass
-        buildSortedDirStructure(sortingDir + '2 - Late Orders/')
+        buildSortedDirStructure(sortingDir + '2 - Late/')
     if Path(sortingDir + '2 - Today/').exists() == True:
         try:
             os.mkdir(sortingDir + '3 - Today/')
@@ -2038,20 +2040,47 @@ def decompress_pdf(temp_buffer):
     return StringIO(stdout)
 
 def possibleOrders(material, orderSize):
-    for printPDF in glob.iglob():
-        return
+    OTOrders = glob.iglob(sortingDir + '1 - OT Orders/' + '**/*.pdf', recursive=True)
+    lateOrders = glob.iglob(sortingDir + '2 - Late/' + '**/*.pdf', recursive=True)
+    todayOrders = glob.iglob(sortingDir + '3 - Today/' + '**/*.pdf', recursive=True) 
+    futureOrders = glob.iglob(sortingDir + '4 - Future/' + '**/*.pdf', recursive=True)
+    
+    possibleOrders = {
+            'Order Troubles' : [],
+            'Late Orders' : [],
+            'Today\'s Orders' : [],
+            'Future Orders' : [],
+        }
+
+    for printPDF in OTOrders:
+        possibleOrders['Order Troubles'].append(printPDF)
+    for printPDF in lateOrders:
+        possibleOrders['Late Orders'].append(printPDF)
+    for printPDF in todayOrders:
+        possibleOrders['Today\'s Orders'].append(printPDF)
+    for printPDF in futureOrders:
+        possibleOrders['Future Orders'].append(printPDF)
+            
+    return possibleOrders
 
 def buildABatch(batchDir, material, materialLength, orderSize):
-    OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
-    lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
-    todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
-    futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    # OTOrders = sortingDir + '1 - OT Orders/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    # lateOrders = sortingDir + '2 - Late/' + dirLookupDict[material] + dirLookupDict[orderSize]
+    # todayOrders = sortingDir + '3 - Today/' + dirLookupDict[material] + dirLookupDict[orderSize] 
+    # futureOrders = sortingDir + '4 - Future/' + dirLookupDict[material] + dirLookupDict[orderSize]
 
-    materialLength = materialLength
     batchLength = 0
     lengthForFull = materialLength * 0.85
     
-    possibleOrders = possibleOrders(material, orderSize)
+    readyToPrint = possibleOrders(material, orderSize)
+    
+    for dueDate in readyToPrint:
+        print('| Type:', dueDate)
+        for order in readyToPrint[dueDate]:
+            print('|----', order.split('/')[-1].split('-')[0], order.split('/')[-1].split('-')[7], dirLookupDict[order.split('/')[-1].split('-')[6]].split('/')[0])
+
+    print('| Creating Batches for Order Troubles and Late Orders.')
+
 
     '''
     Lets do some pseudo code!
