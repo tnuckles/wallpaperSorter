@@ -157,7 +157,7 @@ def main():
                 shutil.rmtree('/Volumes/GoogleDrive/Shared drives/# Production/#LvD Test Fulfillment')
                 shutil.copytree('/Volumes/GoogleDrive/Shared drives/# Production/#LvD Fulfillment', '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Test Fulfillment')
                 transferFilesFromDrive()
-            buildABatch('Batch 1', 'Smooth', 150, 'Full')
+            buildBatchController('Smooth', 150)
             return main()
     print('\n| Job\'s Done!')
 
@@ -165,6 +165,56 @@ def startupChecks():
     checkOrderDirectoryStructure()
     checkBatchCounter()
     moveForDueDates()
+
+def getPdfName(pdf):
+    return pdf.split('/')[-1].split('.pdf')[0]
+
+def getPdfFriendlyName(pdf):
+    friendlyPdfName = getOrderNumber(pdf), getPdfTemplateName(pdf), getOrderItem(pdf) 
+    return friendlyPdfName
+
+def getOrderNumber(pdf):
+    return getPdfName(pdf).split('-')[0]
+
+def getOrderItem(pdf):
+    return getPdfName(pdf).split('-')[1]
+
+def getOrderNumber(pdf):
+    return getPdfName(pdf).split('-')[0]
+
+def getDueDate(pdf):
+    return datetime.date(datetime.strptime(getPdfName(pdf).split('(')[1].split(')')[0], '%Y-%m-%d'))
+
+def getShipMethod(pdf):
+    return getPdfName(pdf).split('-')[5]
+
+def getPdfMaterial(pdf):
+    return getPdfName(pdf).split('-')[6]
+
+def getPdfSize(pdf):
+    return getPdfName(pdf).split('-')[7]
+
+def getPdfRepeat(pdf):
+    return int(getPdfName(pdf).split('-')[8].split('Rp ')[1])
+
+def getPdfQuantity(pdf):
+    return int(getPdfName(pdf)).split('-')[9].split('Qty ')[1]
+
+def getPdfOddOrEven(pdf):
+    return int(getPdfName(pdf)).split('-')[9].split('Qty ')[1] % 2
+
+def getPdfTemplateName(pdf):
+    return getPdfName(pdf).split('-')[10]
+
+def getPdfLength(pdf):
+    return float(getPdfName(pdf).split('-')[11].split('L')[1])
+
+def getPdfWidth(pdf):
+    return int(getPdfName(pdf).split('-')[12].split('W')[1])
+
+def getPdfHeight(pdf):
+    return float(getPdfName(pdf).split('-').split('H')[1])
+
 
 def checkBatchCounter():
     if globalBatchCounter['BatchCounter'] > 9000:
@@ -225,13 +275,13 @@ def checkOrderDirectoryStructure():
 def moveForDueDates():
     print('\n| Updating Orders. Today\'s date:', today)
     for file in glob.iglob(sortingDir + '**/*.pdf', recursive=True):
-        fileName = file.split('/')[-1]
-        orderDueDate = datetime.date(datetime.strptime(fileName.split('(')[1].split(')')[0], '%Y-%m-%d')) 
-        material = fileName.split('-')[6]
-        orderSize = fileName.split('-')[7]
-        repeat = int(fileName.split('-')[8].split(' ')[1])
-        oddOrEven = int(fileName.split('-')[9].split(' ')[1]) % 2   
-        orderLength = float(fileName.split('-')[11].split('L')[1])
+        friendlyName = getPdfFriendlyName(file)
+        orderDueDate = getDueDate(file) 
+        material = getPdfMaterial(file)
+        orderSize = getPdfSize(file)
+        repeat = getPdfRepeat(file)
+        oddOrEven = getPdfOddOrEven(file)   
+        orderLength = getPdfLength(file)
         if orderDueDate < today:
             orderDueDate = '2 - Late/'
         elif orderDueDate > today:
@@ -264,23 +314,23 @@ def moveForDueDates():
         if orderSize == 'Samp':
             try:
                 shutil.move(file, sortingDir + orderDueDate + dirLookupDict[material] + 'Sample/')
-                print('| Updated:', file.split('/')[-1])
+                print('| Updated:', friendlyName)
             except:
                 try:
                     shutil.copy(file, sortingDir + orderDueDate + dirLookupDict[material] + 'Sample/')
                     os.remove(file)
-                    print('| Updated:', file.split('/')[-1])
+                    print('| Updated:', friendlyName)
                 except shutil.SameFileError:
                     continue
         else:
             try:
                 shutil.move(file, sortingDir + orderDueDate + dirLookupDict[material] + 'Full/' + dirLookupDict['RepeatDict'][repeat] + dirLookupDict[oddOrEven])
-                print('| Updated:', file.split('/')[-1])
+                print('| Updated:', friendlyName)
             except:
                 try:
                     shutil.copy(file, sortingDir + orderDueDate + dirLookupDict[material] + 'Full/' + dirLookupDict['RepeatDict'][repeat] + dirLookupDict[oddOrEven])
                     os.remove(file)
-                    print('| Updated:', file.split('/')[-1])
+                    print('| Updated:', friendlyName)
                 except shutil.SameFileError:
                     continue
     print('| Done updating orders based on Due Dates.')
@@ -511,11 +561,11 @@ def splitMultiPagePDFs():
             pass
         if NumOfPages > 1:
                 print(f'| {file} has more than one page in its PDF. Splitting now.')
-                templateName = file.split('-')[10] ##
+                templateName = getPdfTemplateName(file)
                 namePt1 = file.split('Qty ')[0] + 'Qty '
                 namePt2 = file.split(templateName)[1]
-                repeat = file.split('-')[8] ##
-                quantity = int(file.split('-')[9].split(' ')[1])
+                repeat = getPdfRepeat(file) ##
+                quantity = getPdfQuantity(file)
                 for n, page in enumerate(pdf.pages):
                     dst = pikepdf.Pdf.new()
                     dst.pages.append(page)
@@ -529,12 +579,12 @@ def splitMultiPagePDFs():
 def sortPDFsByDetails():
     print('\n| Starting Sort Process. This may take a long time.')
     for file in glob.iglob(downloadDir + '*.pdf'):
-        dueDate = datetime.date(datetime.strptime(file.split('(')[1].split(')')[0], '%Y-%m-%d'))
-        material = file.split('-')[6]
-        orderSize = file.split('-')[7]
-        repeat = int(file.split('-')[8].split(' ')[1])
-        oddOrEven = int(file.split('-')[9].split(' ')[1]) % 2
-        orderLength = float(file.split('-')[11].split('L')[1])
+        dueDate = getDueDate(file)
+        material = getPdfMaterial(file)
+        orderSize = getPdfSize(file)
+        repeat = getPdfRepeat(file)
+        oddOrEven = getPdfOddOrEven(file)
+        orderLength = getPdfLength(file)
         # Checks if order is over the maximum length of a roll and moves it to Needs Attention
         if material == 'Wv':
             if orderLength >= dirLookupDict['MaterialLength']['Woven']:
@@ -1910,20 +1960,20 @@ def checkRepeatSize():
 def cropMultiPanelPDFs(printPDFToSplit):
     orderDict = {
         'fileName':printPDFToSplit.split('.pdf')[0],
-        'orderNumber': printPDFToSplit.split('/')[-1].split('-')[0],
-        'orderItem': printPDFToSplit.split('-')[1],
-        'orderDueDate': datetime.date(datetime.strptime(printPDFToSplit.split('(')[1].split(')')[0], '%Y-%m-%d')),
-        'shipVia': printPDFToSplit.split('-')[5],
-        'material': printPDFToSplit.split('-')[6],
-        'orderSize': printPDFToSplit.split('-')[7],
-        'repeat': int(printPDFToSplit.split('-')[8].split('Rp ')[1]),
-        'repeatPanels': int(int(printPDFToSplit.split('-')[8].split('Rp ')[1]) / 2),
-        'quantity': int(printPDFToSplit.split('-')[9].split('Qty ')[1]),
-        'oddOrEven': int(printPDFToSplit.split('-')[9].split('Qty ')[1]) % 2,
-        'templateName': printPDFToSplit.split('-')[10],
-        'orderLength': float(printPDFToSplit.split('-')[11].split('L')[1]),
-        'orderWidth': int(printPDFToSplit.split('-')[12].split('W')[1]),
-        'orderHeight': float(printPDFToSplit.split('-')[13].split('H')[1].split('.pdf')[0]),
+        'orderNumber': getOrderNumber(printPDFToSplit),
+        'orderItem': getOrderItem(printPDFToSplit),
+        'orderDueDate': getDueDate(printPDFToSplit),
+        'shipVia': getShipMethod(printPDFToSplit),
+        'material': getPdfMaterial(printPDFToSplit),
+        'orderSize': getPdfSize(printPDFToSplit),
+        'repeat': getPdfRepeat(printPDFToSplit),
+        'repeatPanels': int(getPdfRepeat(printPDFToSplit) / 2),
+        'quantity': getPdfQuantity(printPDFToSplit),
+        'oddOrEven': getPdfOddOrEven(printPDFToSplit),
+        'templateName': getPdfTemplateName(printPDFToSplit),
+        'orderLength': getPdfLength(printPDFToSplit),
+        'orderWidth': getPdfWidth(printPDFToSplit),
+        'orderHeight': getPdfHeight(printPDFToSplit),
         'multiPagePDFs' : [],
         'PDFPanelsToCombine' : [],
         }
@@ -2039,7 +2089,7 @@ def decompress_pdf(temp_buffer):
 
     return StringIO(stdout)
 
-def possibleOrders():
+def gatherReadyToBatchPdfs():
     OTOrders = glob.iglob(sortingDir + '1 - OT Orders/' + '**/*.pdf', recursive=True)
     lateOrders = glob.iglob(sortingDir + '2 - Late/' + '**/*.pdf', recursive=True)
     todayOrders = glob.iglob(sortingDir + '3 - Today/' + '**/*.pdf', recursive=True) 
@@ -2067,16 +2117,16 @@ def possibleOrders():
         }
 
     for printPDF in OTOrders:
-        pdfMaterial = printPDF.split('/')[-1].split('-')[6]
+        pdfMaterial = getPdfMaterial(printPDF)
         possibleOrders[pdfMaterial]['orderTroubles'].append(printPDF)
     for printPDF in lateOrders:
-        pdfMaterial = printPDF.split('/')[-1].split('-')[6]
+        pdfMaterial = getPdfMaterial(printPDF)
         possibleOrders[pdfMaterial]['lateOrders'].append(printPDF)
     for printPDF in todayOrders:
-        pdfMaterial = printPDF.split('/')[-1].split('-')[6]
+        pdfMaterial = getPdfMaterial(printPDF)
         possibleOrders[pdfMaterial]['todaysOrders'].append(printPDF)
     for printPDF in futureOrders:
-        pdfMaterial = printPDF.split('/')[-1].split('-')[6]
+        pdfMaterial = getPdfMaterial(printPDF)
         possibleOrders[pdfMaterial]['futureOrders'].append(printPDF)
             
     return possibleOrders
@@ -2128,27 +2178,27 @@ def mainBuildBatchLoop(listOfPdfsToBatch, adjustedMaterialLength, BatchDir):
     
     while (curBatchDirLength < adjustedMaterialLength) and (loopCounter < 1):
         for printPDF in listOfPdfsToBatch:
-            pdfName = printPDF.split('/'[-1]).split('.pdf')[0]
-            friendlyPdfName = printPDF.split('-')[0], printPDF.split('-')[10], printPDF.split('-')[1] 
-            pdfLength = float(pdfName.split('-')[11].split('L')[1])
-            pdfOdd = int(pdfName.split('-')[9].split('Qty ')[1]) % 2
-            pdfHeight = float(pdfName.split('-')[-1].split('H')[1])
+            pdfName = getPdfName(printPDF)
+            friendlyPdfName = getOrderNumber(printPDF), getPdfTemplateName(printPDF), getOrderItem(printPDF) 
+            pdfLength = getPdfLength(printPDF)
+            pdfOddOrEven = getPdfOddOrEven(printPDF)
+            pdfHeight = getPdfHeight(printPDF)
             if (curBatchDirLength + pdfLength) > (adjustedMaterialLength * 1.02):
                 print('| PDF will exceed material length.\n| PDF:', friendlyPdfName)
                 print()
             else:
-                if (findOdd == False) and (pdfOdd == 0):
+                if (findOdd == False) and (pdfOddOrEven == 0):
                     success = tryToMovePDF(printPDF, BatchDir, friendlyPdfName, pdfLength)
                     if success == True:
                         findOdd = False
-                elif (findOdd == False) and (pdfOdd == 1):
+                elif (findOdd == False) and (pdfOddOrEven == 1):
                     success = tryToMovePDF(printPDF, BatchDir, friendlyPdfName, pdfLength)
                     if success == True:
                         findOdd = True
                         oddMatchHeight = pdfHeight
-                elif (findOdd == True) and (pdfOdd == 0):
+                elif (findOdd == True) and (pdfOddOrEven == 0):
                     continue
-                elif (findOdd == True) and (pdfOdd == 1):
+                elif (findOdd == True) and (pdfOddOrEven == 1):
                     if oddMatchHeight != pdfHeight:
                         continue
                     else:
