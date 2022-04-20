@@ -1,5 +1,4 @@
 #!usr/bin/env python
-
 # Series of functions that break apart the name of a PDF and return a specific value
 
 import datetime

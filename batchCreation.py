@@ -9,6 +9,9 @@ from PyPDF2 import PdfFileReader, PdfFileWriter, PdfFileMerger, utils
 from io import StringIO
 import subprocess
 
+import wallpaperSorterVariables as gv
+from wallpaperSorter import main
+
 def BatchOrdersMain():
     options = 1,2,3,4,5,6,0
     print('\n| Main Menu > Batch Orders')
@@ -87,7 +90,7 @@ def confirmBatch(material, orderSize):
 
 def batchingController(material, orderSize):
     print('\n| Starting', material, orderSize, 'Batching.')
-    materialLength = dirLookupDict['MaterialLength'][material]
+    materialLength = gv.dirLookupDict['MaterialLength'][material]
     # materialLength = int(input('\n| Please input your starting material length in feet > '))
     # while materialLength != type(int):
     #     materialLength = int(input('\n| Please input your starting material length in feet > '))

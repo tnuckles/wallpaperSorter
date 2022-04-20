@@ -1,9 +1,7 @@
 #!usr/bin/env python
 
-import os, shutil, math, datetime, time, json, glob, pikepdf
-import zipfile as zf
-from pathlib import Path
-from datetime import date, timedelta, datetime
+import os
+from datetime import date, datetime
 from sqlitedict import SqliteDict
 
 today = datetime.today()
@@ -22,7 +20,7 @@ BatchCounterDB = calderaDir + 'z_Storage/z_WallpaperDB/lvdGlobalBatchCounter.sql
 globalBatchCounter = SqliteDict(BatchCounterDB, autocommit=True)
 #globalBatchCounter['BatchCounter'] = 1
 
-BatchFoldersDir = calderaDir + '2 Batch Folders/'
+batchFoldersDir = calderaDir + '2 Batch Folders/'
 downloadDir = calderaDir + '3 Downloaded/'
 needsAttention = calderaDir + '4 Needs Attention/'
 sortingDir = calderaDir + '5 Sorted for Print/'
@@ -84,7 +82,7 @@ pdfsToRename = {
     
 }
 
-countOfRefPDFs = { #Running count of PDFs that are referenced during sample creating. If a PDF is referenced more than once, the order and PDF are printed to alert fulfillment of dual-type samples
+countOfRefPdfs = { #Running count of PDFs that are referenced during sample creating. If a PDF is referenced more than once, the order and PDF are printed to alert fulfillment of dual-type samples
     
 }
 
