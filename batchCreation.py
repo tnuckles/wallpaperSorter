@@ -70,7 +70,7 @@ def BatchOrdersMain():
         batchingController('Smooth', 'Sample')
     elif command == 0:
         print('| Returning to Main Menu.')
-        return main()
+        return
 
 def confirmBatch(material, orderSize):
     options = 1,2
@@ -393,4 +393,170 @@ def decompress_pdf(temp_buffer):
 
     return StringIO(stdout)
 
+def buildController():
+    readyToPrint = gatherReadyToBatchPdfs()
+    BatchDir = gv.batchFoldersDir + 'In Progress'
+    os.mkdir(BatchDir)
+    for material in readyToPrint:
+        for priority in readyToPrint[material]:
+            listOfPdfsToBatch = readyToPrint[material][priority]
+            adjustedMaterialLength = gv.dirLookupDict['MaterialLength'][material]*0.85
+            mainBuildBatchLoop(listOfPdfsToBatch, adjustedMaterialLength, BatchDir)
+
+def mainBuildBatchLoop(listOfPdfsToBatch, adjustedMaterialLength, BatchDir):
+    curBatchDirLength = 0
+    findOdd = False
+    oddMatchHeight = 0
+    loopCounter = 0
     
+    while (curBatchDirLength < adjustedMaterialLength) and (loopCounter < 1):
+        for printPDF in listOfPdfsToBatch:
+
+            friendlyPdfName = getPdf.orderNumber(printPDF), getPdf.templateName(printPDF), getPdf.orderItem(printPDF) 
+            pdfLength = getPdf.length(printPDF)
+            pdfOddOrEven = getPdf.oddOrEven(printPDF)
+            pdfHeight = getPdf.height(printPDF)
+            if (curBatchDirLength + pdfLength) > (adjustedMaterialLength * 1.02):
+                print('| PDF will exceed material length.\n| PDF:', friendlyPdfName)
+                print()
+            else:
+                if (findOdd == False) and (pdfOddOrEven == 0):
+                    success = tryToMovePDF(printPDF, BatchDir, friendlyPdfName, pdfLength)
+                    if success == True:
+                        curBatchDirLength += pdfLength
+                        findOdd = False
+                elif (findOdd == False) and (pdfOddOrEven == 1):
+                    success = tryToMovePDF(printPDF, BatchDir, friendlyPdfName, pdfLength)
+                    if success == True:
+                        curBatchDirLength += pdfLength
+                        findOdd = True
+                        oddMatchHeight = pdfHeight
+                elif (findOdd == True) and (pdfOddOrEven == 0):
+                    continue
+                elif (findOdd == True) and (pdfOddOrEven == 1):
+                    if oddMatchHeight != pdfHeight:
+                        continue
+                    else:
+                        success = tryToMovePDF(printPDF, BatchDir, friendlyPdfName, pdfLength)
+                        if success == True:
+                            curBatchDirLength += pdfLength
+                            findOdd = False
+                            oddMatchHeight = 0
+        loopCounter += 1  
+
+def gatherReadyToBatchPdfs():
+    dirsToCheck = {
+        'orderTroubles' : (glob.iglob(gv.sortingDir + '1 - OT Orders/' + '**/*.pdf', recursive=True), 'orderTroubles'),
+        'lateOrders' : (glob.iglob(gv.sortingDir + '2 - Late/' + '**/*.pdf', recursive=True), 'lateOrders'),
+        'todaysOrders' : (glob.iglob(gv.sortingDir + '3 - Today/' + '**/*.pdf', recursive=True),  'todaysOrders'),
+        'futureOrders' : (glob.iglob(gv.sortingDir + '4 - Future/' + '**/*.pdf', recursive=True), 'futureOrders'),
+    }
+
+    possibleOrders = {
+            'Wv' : {
+                'orderTroubles' : [],
+                'lateOrders' : [],
+                'todaysOrders' : [],
+                'futureOrders' : [],
+            },
+            'Sm' : {
+                'orderTroubles' : [],
+                'lateOrders' : [],
+                'todaysOrders' : [],
+                'futureOrders' : [],
+            },
+            'Tr' : {
+                'orderTroubles' : [],
+                'lateOrders' : [],
+                'todaysOrders' : [],
+                'futureOrders' : [],
+            },
+        }
+
+    for dir in dirsToCheck:
+        for printPdf in dirsToCheck[dir][0]:
+            material = getPdf.material(printPdf)
+            possibleOrders[material][dirsToCheck[dir][1]].append(printPdf)
+
+    # for printPDF in OTOrders:
+    #     pdfMaterial = getPdf.material(printPDF)
+    #     possibleOrders[pdfMaterial]['orderTroubles'].append(printPDF)
+    # for printPDF in lateOrders:
+    #     pdfMaterial = getPdf.material(printPDF)
+    #     possibleOrders[pdfMaterial]['lateOrders'].append(printPDF)
+    # for printPDF in todayOrders:
+    #     pdfMaterial = getPdf.material(printPDF)
+    #     possibleOrders[pdfMaterial]['todaysOrders'].append(printPDF)
+    # for printPDF in futureOrders:
+    #     pdfMaterial = getPdf.material(printPDF)
+    #     possibleOrders[pdfMaterial]['futureOrders'].append(printPDF)
+
+    return possibleOrders
+
+def buildBatchController():
+    # OTOrders = gv.sortingDir + '1 - OT Orders/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
+    # lateOrders = gv.sortingDir + '2 - Late/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
+    # todayOrders = gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize] 
+    # futureOrders = gv.sortingDir + '4 - Future/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
+
+    percentLengthForFull = 0.85
+
+    currentBatches = {
+        'Wv' : {
+            'materialLength' : gv.dirLookupDict['MaterialLength']['Woven'],
+            'lengthForFull' : currentBatches['materialLength'] * percentLengthForFull, # is an int
+            'batchLength' : 0,
+            'priority' : '', # should say the highest priority in the batch: (OT), (L)ate, (T)oday, or (F)uture)
+            'sizeCounts' : {
+                'full' : 0,
+                'samp' : 0
+            },
+            'pdfs' : [],
+        },
+        'Sm' : {
+            'materialLength' : gv.dirLookupDict['MaterialLength']['Smooth'],
+            'lengthForFull' : currentBatches['materialLength'] * percentLengthForFull, # is an int
+            'batchLength' : 0,
+            'priority' : '', # should say the highest priority in the batch: (OT), (L)ate, (T)oday, or (F)uture)
+            'sizeCounts' : {
+                'full' : 0,
+                'samp' : 0
+            },
+            'pdfs' : [],
+        },
+        'Tr' : {
+            'materialLength' : gv.dirLookupDict['MaterialLength']['Traditional'],
+            'lengthForFull' : currentBatches['materialLength'] * percentLengthForFull, # is an int
+
+            'batchLength' : 0,
+            'priority' : '', # should say the highest priority in the batch: (OT), (L)ate, (T)oday, or (F)uture)
+            'sizeCounts' : {
+                'full' : 0,
+                'samp' : 0
+            },
+            'pdfs' : [],
+        },
+    }
+
+    readyToPrint = gatherReadyToBatchPdfs()
+
+    for materialDict in currentBatches:
+        curBatchLength = currentBatches[materialDict]['batchLength']
+        while curBatchLength < currentBatches[materialDict]['lengthForFull']:
+            return
+
+    '''
+    Lets do some pseudo code!
+    First, get the total length of material (let's say 150 for smooth)
+    then, look for full 2' repeat orders 
+    add them to the current Batch until the Batch length is 
+    repeat until Batch is 85% of material length OR until there are no more full, 2' repeat orders
+    once 85% of material length is exceeded, search for 13% worth of samples OR until there are no additional samples
+    once that 13% has been met or exceeded, add 5% of color guides.
+    Once that 5% has been met, complete the Batch.
+
+    '''
+
+    # findFull2pOrders()
+    # findSampleOrders()
+    # findColorGuides()
