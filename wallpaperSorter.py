@@ -13,7 +13,7 @@ import wallpaperSorterVariables as gv
 import batchCreation as batch
 import getPdfData as getPdf
 
-today = datetime.today()
+today = date.today()
 ### Definitions
 
 def main():
@@ -81,6 +81,11 @@ def main():
                 transferFilesFromDrive()
             return main()
     print('\n| Job\'s Done!')
+
+def startupChecks():
+    checkOrderDirectoryStructure()
+    checkBatchCounter()
+    moveForDueDates()
 
 def checkBatchCounter():
     if gv.globalBatchCounter['batchCounter'] > 9000:
@@ -431,7 +436,7 @@ def splitMultiPagePDFs():
                 namePt1 = file.split('Qty ')[0] + 'Qty '
                 namePt2 = file.split(templateName)[1]
                 repeat = getPdf.repeat(file) ##
-                quantity = getPdfQuantity(file)
+                quantity = getPdf.quantity(file)
                 for n, page in enumerate(pdf.pages):
                     dst = pikepdf.Pdf.new()
                     dst.pages.append(page)
@@ -684,9 +689,9 @@ def batchingController(material, orderSize):
     # materialLength = int(input('\n| Please input your starting material length in feet > '))
     # while materialLength != type(int):
     #     materialLength = int(input('\n| Please input your starting material length in feet > '))
-    BatchDir = BatchDirBuilder(material, orderSize)
-    findOrdersForPrintv3(BatchDir, material, orderSize, (int(materialLength)))
-    removeEmptyBatchFolders(True)
+    batchDir = batch.dirBuilder(material, orderSize)
+    batch.findOrdersForPrintv3(batchDir, material, orderSize, (int(materialLength)))
+    batch.removeEmptyBatchFolders(True)
     # if orderSize == 'Full':
     #     findOrdersForPrintv3(BatchDir, material, orderSize, (int(materialLength)))
     #     removeEmptyBatchFolders(True)

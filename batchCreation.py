@@ -10,7 +10,6 @@ from io import StringIO
 import subprocess
 
 import wallpaperSorterVariables as gv
-from wallpaperSorter import main
 import getPdfData as getPdf
 
 today = datetime.today()
@@ -97,8 +96,8 @@ def batchingController(material, orderSize):
     # materialLength = int(input('\n| Please input your starting material length in feet > '))
     # while materialLength != type(int):
     #     materialLength = int(input('\n| Please input your starting material length in feet > '))
-    BatchDir = BatchDirBuilder(material, orderSize)
-    findOrdersForPrintv3(BatchDir, material, orderSize, (int(materialLength)))
+    batchDir = dirBuilder(material, orderSize)
+    findOrdersForPrintv3(batchDir, material, orderSize, (int(materialLength)))
     removeEmptyBatchFolders(True)
     # if orderSize == 'Full':
     #     findOrdersForPrintv3(BatchDir, material, orderSize, (int(materialLength)))
@@ -107,7 +106,7 @@ def batchingController(material, orderSize):
     #     findSampleOrdersForPrint(BatchDir, material, orderSize, (int(materialLength * 12)))
     print('\n| Finished Batching', material, orderSize, 'orders.')
 
-def BatchDirBuilder(material, orderSize):
+def dirBuilder(material, orderSize):
     BatchDir = gv.batchFoldersDir + 'Batch #' + str(gv.globalBatchCounter['batchCounter']) + ' ' + today.strftime('%m-%d-%y') + ' ' + material + ' ' + orderSize + ' L0'
     gv.globalBatchCounter['batchCounter'] += 1
     #BatchDir = doesDirExist(material, orderSize)
@@ -154,9 +153,9 @@ def findOrdersForPrintv3(batchDir, material, orderSize, materialLength):
             os.rename(batchDir, gv.batchFoldersDir + newBatchName)
             print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
             curBatchDirLength = 0
-            BatchDir = BatchDirBuilder(material, orderSize)
+            batchDir = dirBuilder(material, orderSize)
             #materialLength = input('| Please input your material length. > ')
-            return findOrdersForPrintv3(BatchDir, material, orderSize, int(materialLength))
+            return findOrdersForPrintv3(batchDir, material, orderSize, int(materialLength))
 
 def removeEmptyBatchFolders(safe):
     for BatchFolder in glob.iglob(gv.batchFoldersDir + '*'):
@@ -393,3 +392,5 @@ def decompress_pdf(temp_buffer):
     stdout, stderr = process.communicate()
 
     return StringIO(stdout)
+
+    

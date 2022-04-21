@@ -1,7 +1,14 @@
 #!usr/bin/env python
 # Series of functions that break apart the name of a PDF and return a specific value
 
-import datetime
+import os, shutil, math, datetime, time, json, glob, pikepdf
+import zipfile as zf
+from pathlib import Path
+from datetime import date, timedelta, datetime
+from sqlitedict import SqliteDict
+from PyPDF2 import PdfFileReader, PdfFileWriter, PdfFileMerger, utils
+from io import StringIO
+import subprocess
 
 def name(pdf):
     return pdf.split('/')[-1].split('.pdf')[0]
@@ -17,7 +24,9 @@ def orderItem(pdf):
     return name(pdf).split('-')[1]
 
 def dueDate(pdf):
-    return datetime.date(datetime.strptime(name(pdf).split('(')[1].split(')')[0], '%Y-%m-%d'))
+    #return datetime.date(datetime.strptime(name(pdf).split('(')[1].split(')')[0], '%Y-%m-%d'))
+    fileName = name(pdf)
+    return datetime.date(datetime.strptime(fileName.split('(')[1].split(')')[0], '%Y-%m-%d')) 
 
 def shipMethod(pdf):
     return name(pdf).split('-')[5]
