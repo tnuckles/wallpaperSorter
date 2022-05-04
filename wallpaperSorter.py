@@ -4,10 +4,6 @@ import os, shutil, math, datetime, time, json, glob, pikepdf
 import zipfile as zf
 from pathlib import Path
 from datetime import date, timedelta, datetime
-from sqlitedict import SqliteDict
-from PyPDF2 import PdfFileReader, PdfFileWriter, PdfFileMerger, utils
-from io import StringIO
-import subprocess
 
 import wallpaperSorterVariables as gv
 import batchCreation as batch
@@ -23,12 +19,11 @@ def main():
     print('| 2. Download Orders from Google Drive')
     print('| 3. Batch Orders')
     print('| 4. Update Sorting Based on Due Dates')
-    print('| 6. Test Batches')
     print('| 5. Quit')
     try:
         command = int(input('\n| Command > '))
     except ValueError:
-        print('\n| Please enter a number, not text.')
+        print('\n| Please enter a whole number, not text.')
         return main()
     while int(command) not in options:
         print('\n| Not a valid choice.')
@@ -46,13 +41,10 @@ def main():
         transferFilesFromDrive()
         return main()
     elif command == 3:
-        BatchOrdersMain()
+        batch.batchCreationController()
         return main()
     elif command == 4:
         moveForDueDates()
-        return main()
-    elif command == 6:
-        batch.buildController()
         return main()
     elif command == 5:
         print('\n| Goodbye!')
@@ -284,7 +276,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
                 if height == '148.25':
                     height = '146.25'
                 orderSize = 'Full'
-                length = str((math.ceil(int(quantity)/2)*float(height) + ((math.floor(int(quantity)/2) * .5) + ((int(quantity) % 2) * .5))))
+                length = str(getPdf.calculate_length(quantity, height))
                 # See Length Notes at the end of the function for an explanation.
             newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
             renamePDF(originalPDFName, newPDFName)
@@ -346,7 +338,8 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
             if height == '148.25':
                 height = '146.25'
             orderSize = 'Full'
-            length = str((math.ceil(int(quantity)/2)*float(height) + ((math.floor(int(quantity)/2) * .5) + ((int(quantity) % 2) * .5))))
+            length = str(getPdf.calculate_length(quantity, height))
+
         newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
         renamePDF(originalPDFName, newPDFName)
         keepTrackOfPDF(orderNumber, originalPDFName) 
@@ -386,12 +379,77 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
                 }
             }
     
-    ''' # Length Notes: I will never remember why I did this. Here are my notes. The length is the length of material an order will take up.
+    ''' # Length Notes: I will never remember why I did this, so here are my notes. The length is the length of material an order will take up.
         # Length Notes: The above equation takes the quantity and divides it by two since we can fit two panels side by side.
         # Length Notes: it then multiplies that by the height to get the overall length of material.
         # Length Notes: after, it takes the quantity/2, rounds it down, and multiplies it by .5 for the .5" gap between each panel.
         # Length Notes: lastly, it takes the quantity % 2 to see if the quantity is odd or not. If the quantity is odd, then it will add on one more length of .5"
         # Length Notes: for the times that a panel is by itself and still has another .5" section.'''
+
+def parseJsonLoop(JSON, JSONitem, orderNumber, itemNum, orderDueDate, shipVia):
+    originalPDFName = JSONitem[itemNum]['filename']
+    itemID = originalPDFName.split('_')[0]
+    try:
+        templateName = JSONitem[itemNum]['description'].split(' ')[2] + ' ' + JSONitem[itemNum]['description'].split(' ')[3]
+    except IndexError:
+        templateName = JSONitem[itemNum]['description'].split(' Wallpaper')[0]
+    paperType = gv.substrate[JSONitem[itemNum]['paper']]
+    quantity = JSONitem[itemNum]['quantityOrdered']
+    height = JSONitem[itemNum]['height'] 
+    width = JSONitem[itemNum]['width']
+    repeat = JSONitem[itemNum]['wallpaperRepeat']
+    orderTroubleNotes = JSON['order_trouble_notes']
+    if width == '9':
+        orderSize = 'Samp'
+        length = '9.5'
+        height = '9'
+        width = '25'
+    else:
+        width = str(int(width) * int(quantity) + 1)
+        height = str(int(height) + 4.25)
+        if height == '148.25':
+            height = '146.25'
+        orderSize = 'Full'
+        length = str((math.ceil(int(quantity)/2)*float(height) + ((math.floor(int(quantity)/2) * .5) + ((int(quantity) % 2) * .5))))
+        # See Length Notes at the end of the function for an explanation.
+    newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
+    renamePDF(originalPDFName, newPDFName)
+    keepTrackOfPDF(orderNumber, originalPDFName) 
+    count += 1
+    if orderNumber in gv.orderItemsDict:
+        gv.orderItemsDict[orderNumber][itemID] = {
+            'Status': 'Sorted',
+            'Due Date': orderDueDate,
+            'Shipping': shipVia,
+            'Material': paperType,
+            'Order Size': orderSize,
+            'Repeat': repeat.split('\'')[0],
+            'Quantity': quantity,
+            'Template': templateName,
+            'Length': length,
+            'Width': width,
+            'Height': height,
+            'OT Notes': orderTroubleNotes,
+            'File Path': gv.sortingDir + '2 - Late/' + gv.dirLookupDict[paperType] + gv.dirLookupDi[orderSize] + gv.dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + gv.dirLookupDict[int(quantity) % 2] + newPDFName,
+        }
+    else:
+        gv.orderItemsDict[orderNumber] = {
+            itemID : {
+                'Status': 'Sorted',
+                'Due Date': orderDueDate,
+                'Shipping': shipVia,
+                'Material': paperType,
+                'Order Size': orderSize,
+                'Repeat': repeat.split('\'')[0],
+                'Quantity': quantity,
+                'Template': templateName,
+                'Length': length,
+                'Width': width,
+                'Height': height,
+                'OT Notes': orderTroubleNotes,
+                'File Path': gv.sortingDir + '2 - Late/' + gv.dirLookupDict[paperType] + gv.dirLookupDi[orderSize] + gv.dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + gv.dirLookupDict[int(quantity) % 2] + newPDFName,
+            }
+        }
 
 def renamePDF(old, new):
     extension = old.split(".")[-1]
@@ -607,98 +665,6 @@ def buildDBSadNoises():
             }
     print('| DB Built.')
 
-def BatchOrdersMain():
-    options = 1,2,3,4,5,6,0
-    print('\n| Main Menu > Batch Orders')
-    print('| 1. Batch Smooth Full')
-    print('| 2. Batch Smooth Samples')
-    print('| 3. Batch Woven Full')
-    print('| 4. Batch Woven Samples')
-    print('| 5. Batch the whole damn thing')
-    print('| 0. Return to Main Menu.')
-    try:
-        command = int(input('\n| Command > '))
-    except ValueError:
-        print('\n| Please enter a number, not text.')
-        return BatchOrdersMain()
-    while int(command) not in options:
-        print('\n| Not a valid choice.')
-        return BatchOrdersMain()
-    if command == 1:
-        confirm = confirmBatch('Smooth', 'Full')
-        if confirm == True:
-            batchingController('Smooth', 'Full')
-            return BatchOrdersMain()
-        elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return BatchOrdersMain()
-    elif command == 2:
-        confirm = confirmBatch('Smooth', 'Sample')
-        if confirm == True:
-            batchingController('Smooth', 'Sample')
-            return BatchOrdersMain()
-        elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return BatchOrdersMain()
-    elif command == 3:
-        confirm = confirmBatch('Woven', 'Full')
-        if confirm == True:
-            batchingController('Woven', 'Full')
-            return BatchOrdersMain()
-        elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return BatchOrdersMain()
-    elif command == 4:
-        confirm = confirmBatch('Woven', 'Sample')
-        if confirm == True:
-            batchingController('Woven', 'Sample')
-            return BatchOrdersMain()
-        elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return BatchOrdersMain()
-    elif command == 5:
-        batchingController('Woven', 'Full')
-        batchingController('Woven', 'Sample')
-        batchingController('Smooth', 'Full')
-        batchingController('Smooth', 'Sample')
-    elif command == 0:
-        print('| Returning to Main Menu.')
-        return main()
-
-def confirmBatch(material, orderSize):
-    options = 1,2
-    print('\n| Confirm: Batch', material, orderSize, 'PDFs?')
-    print('| 1. Yes')
-    print('| 2. No')
-    try:
-        command = int(input('| Command > '))
-    except ValueError:
-        print('\n| Please enter a number, not text.')
-        return confirmBatch(material, orderSize)
-    while int(command) not in options:
-        print('\n| Not a valid choice.')
-        return confirmBatch(material, orderSize)
-    if command == 1:
-        return True
-    elif command == 2:
-        return False
-
-def batchingController(material, orderSize):
-    print('\n| Starting', material, orderSize, 'Batching.')
-    materialLength = gv.dirLookupDict['MaterialLength'][material]
-    # materialLength = int(input('\n| Please input your starting material length in feet > '))
-    # while materialLength != type(int):
-    #     materialLength = int(input('\n| Please input your starting material length in feet > '))
-    batchDir = batch.dirBuilder(material, orderSize)
-    batch.findOrdersForPrintv3(batchDir, material, orderSize, (int(materialLength)))
-    batch.removeEmptyBatchFolders(True)
-    # if orderSize == 'Full':
-    #     findOrdersForPrintv3(BatchDir, material, orderSize, (int(materialLength)))
-    #     removeEmptyBatchFolders(True)
-    # else:
-    #     findSampleOrdersForPrint(BatchDir, material, orderSize, (int(materialLength * 12)))
-    print('\n| Finished Batching', material, orderSize, 'orders.')
-
 def removeOldOrders(folderToClean, days): #removes folders and contents older than X days
     olderThanDays = days
     for subFolder in folderToClean.values(): #gets subfolder path
@@ -714,257 +680,6 @@ def removeOldOrders(folderToClean, days): #removes folders and contents older th
             except ValueError:
                 continue
 
-def findSampleOrdersForPrint(BatchDir, material, orderSize, materialLength):
-    OTOrders = gv.sortingDir + '1 - OT Orders/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-    lateOrders = gv.sortingDir + '2 - Late/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-    todayOrders = gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize] 
-    futureOrders = gv.sortingDir + '4 - Future/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-    curBatchDirLength = 0
-    oddCount = 1
-    if (curBatchDirLength < (materialLength - 10)):
-        for sample in glob.iglob(lateOrders + '*.pdf'):
-            if (curBatchDirLength + float(sample.split('/')[9].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                newBatchName = BatchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-                os.rename(BatchDir, gv.batchFoldersDir + newBatchName)
-                print('\n| Batch with OT/Late Orders Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-                BatchDir = batch.dirBuilder(material, orderSize)
-                materialLength = input('| Please input your material length. > ')
-                return findSampleOrdersForPrint(BatchDir, material, orderSize, int(materialLength)*12)
-                # return findSampleOrdersForPrint(BatchDir, material, orderSize, gv.dirLookupDict['MaterialLength'][material])
-            else:
-                try:
-                    shutil.move(sample, BatchDir)
-                    if oddCount == 0:
-                        curBatchDirLength += float(sample.split('/')[9].split('-')[11].split('L')[1])
-                        oddCount = 1
-                    else:
-                        oddCount = 0
-                except shutil.Error:
-                    shutil.copy(sample, BatchDir)
-                    try:
-                        os.remove(sample)
-                    except OSError:
-                        print('|> Could not remove ' + sample)
-                except FileNotFoundError:
-                    print('|> Couldn\'t find sample to move. \n|> File: ', sample)
-    if (curBatchDirLength < (materialLength - 10)):
-        for sample in glob.iglob(todayOrders + '*.pdf'):
-            if (curBatchDirLength + float(sample.split('/')[9].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                newBatchName = BatchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-                os.rename(BatchDir, gv.batchFoldersDir + newBatchName)
-                print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-                BatchDir = batch.dirBuilder(material, orderSize)
-                materialLength = input('| Please input your material length. > ')
-                return findSampleOrdersForPrint(BatchDir, material, orderSize, int(materialLength)*12)
-                # return findSampleOrdersForPrint(BatchDir, material, orderSize, gv.dirLookupDict['MaterialLength'][material])
-            else:
-                try:
-                    shutil.move(sample, BatchDir)
-                    if oddCount == 0:
-                        curBatchDirLength += float(sample.split('/')[9].split('-')[11].split('L')[1])
-                        oddCount = 1
-                    else:
-                        oddCount = 0
-                except shutil.Error:
-                    shutil.copy(sample, BatchDir)
-                    try:
-                        os.remove(sample)
-                    except OSError:
-                        print('|> Could not remove ' + sample)
-                except FileNotFoundError:
-                    print('|> Couldn\'t find sample to move. \n|> File: ', sample)
-    if (curBatchDirLength < (materialLength - 10)):
-        for sample in glob.iglob(futureOrders + '*.pdf'):
-            if (curBatchDirLength + float(sample.split('/')[9].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                newBatchName = BatchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-                os.rename(BatchDir, gv.batchFoldersDir + newBatchName)
-                print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-                BatchDir = batch.dirBuilder(material, orderSize)
-                materialLength = input('| Please input your material length. > ')
-                return findSampleOrdersForPrint(BatchDir, material, orderSize, int(materialLength)*12)
-                # return findSampleOrdersForPrint(BatchDir, material, orderSize, gv.dirLookupDict['MaterialLength'][material])
-            else:
-                try:
-                    shutil.move(sample, BatchDir)
-                    if oddCount == 0:
-                        curBatchDirLength += float(sample.split('/')[9].split('-')[11].split('L')[1])
-                        oddCount = 1
-                    else:
-                        oddCount = 0
-                except shutil.Error:
-                    shutil.copy(sample, BatchDir)
-                    try:
-                        os.remove(sample)
-                    except OSError:
-                        print('|> Could not remove ' + sample)
-                except FileNotFoundError:
-                    print('|> Couldn\'t find sample to move. \n|> File: ', sample)                
-    newBatchName = BatchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-    print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-    os.rename(BatchDir, gv.batchFoldersDir + newBatchName)
-    return
-
-def findFullRp2EvenOrdersForPrint(BatchDir, material, orderSize, materialLength):
-    OTOrders = gv.sortingDir + '1 - OT Orders/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-    lateOrders = gv.sortingDir + '2 - Late/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-    todayOrders = gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize] 
-    futureOrders = gv.sortingDir + '4 - Future/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-    curBatchDirLength = 0
-    while len(glob.glob(gv.sortingDir + '*/'+ gv.dirLookupDict[material] + gv.dirLookupDict[orderSize] + 'Repeat 2/Even Panels/*.pdf'))>0:
-        if (curBatchDirLength < (materialLength - 0.85)):
-            for order in glob.iglob(lateOrders + 'Repeat 2/Even Panels/*.pdf'):
-                if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                    newBatchName = BatchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-                    os.rename(BatchDir, gv.batchFoldersDir + newBatchName)
-                    print('\n| Batch with OT/Late Orders Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-                    BatchDir = batch.dirBuilder(material, orderSize)
-                    return findFullRp2EvenOrdersForPrint(BatchDir, material, orderSize, gv.dirLookupDict['MaterialLength'][material])
-                else:
-                    try:
-                        shutil.move(order, BatchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
-                    except shutil.Error:
-                        shutil.copy(order, BatchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
-                        try:
-                            os.remove(order)
-                        except OSError:
-                            print('|> Could not remove ' + order)
-                    except FileNotFoundError:
-                        print('|> Couldn\'t find order to move. \n|> File: ', order)
-        if (curBatchDirLength < (materialLength - 0.85)):
-            for order in glob.iglob(todayOrders + 'Repeat 2/Even Panels/*.pdf'):
-                if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                    continue
-                else:
-                    try:
-                        shutil.move(order, BatchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
-                    except shutil.Error:
-                        shutil.copy(order, BatchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
-                        try:
-                            os.remove(order)
-                        except OSError:
-                            print('|> Could not remove ' + order)
-                    except FileNotFoundError:
-                        print('|> Couldn\'t find order to move. \n|> File: ', order)
-        if (curBatchDirLength < (materialLength - 0.85)):
-            for order in glob.iglob(futureOrders + 'Repeat 2/Even Panels/*.pdf'):
-                if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                    continue
-                else:
-                    try:
-                        shutil.move(order, BatchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
-                    except shutil.Error:
-                        shutil.copy(order, BatchDir)
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
-                        try:
-                            os.remove(order)
-                        except OSError:
-                            print('|> Could not remove ' + order)
-                    except FileNotFoundError:
-                        print('|> Couldn\'t find order to move. \n|> File: ', order)    
-    
-    newBatchName = BatchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-    print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-    os.rename(BatchDir, gv.batchFoldersDir + newBatchName)
-    return
-
-def findFullRp2OddOrdersForPrint(BatchDir, material, orderSize, materialLength):
-    OTOrders = gv.sortingDir + '1 - OT Orders/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-    lateOrders = gv.sortingDir + '2 - Late/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-    todayOrders = gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize] 
-    futureOrders = gv.sortingDir + '4 - Future/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-    curBatchDirLength = 0
-    oddCount = 0
-    oddCountHeight = 0
-    if (curBatchDirLength < (materialLength - 0.85)):
-        for order in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*.pdf'):
-            if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                newBatchName = BatchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-                os.rename(BatchDir, gv.batchFoldersDir + newBatchName)
-                BatchDir = batch.dirBuilder(material, orderSize)
-                print('| ' + BatchDir)
-                return findFullRp2OddOrdersForPrint(BatchDir, material, orderSize, gv.dirLookupDict['MaterialLength'][material])
-            else:
-                currentOrderLength = order.split('/')[11].split('-')[13]
-                for orderToMatch in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*' + currentOrderLength): #don't need to include the .pdf in the filename here as it's included in currentOrderLength
-                    if (curBatchDirLength + (float(order.split('/')[11].split('-')[11].split('L')[1]) + float(orderToMatch.split('/')[11].split('-')[11].split('L')[1])) - float(orderToMatch.split('/')[11].split('-')[13].split('H')[1].split('.pdf'))[0] > (materialLength * 1.01)): 
-                        continue
-                    else:
-                        try:
-                            shutil.move(order, BatchDir)
-                            shutil.move(orderToMatch, BatchDir)
-                        except shutil.Error:
-                            shutil.copy(order, BatchDir)
-                            try:
-                                os.remove(order)
-                            except OSError:
-                                print('|> Could not remove ' + order)
-                        except FileNotFoundError:
-                            print('|> Couldn\'t find order to move. \n|> File: ', order)
-    if (curBatchDirLength < (materialLength - 0.85)):
-        for order in glob.iglob(todayOrders + 'Repeat 2/Odd Panels/*.pdf'):
-            if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                continue
-            else:
-                try:
-                    shutil.move(order, BatchDir)
-                    if oddCount == 0:
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
-                        oddCount = 1
-                        oddCountHeight = float(order.split('/')[11].split('-')[13].split('H')[1].split('.pdf')[0])
-                    else:
-                        while oddCount == 1:
-                            for oddOrder in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*H' + str(oddCountHeight) +'.pdf'):
-                                if (curBatchDirLength + float(oddOrder.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                                    continue
-                                else:
-                                    shutil.move(oddOrder, BatchDir)
-                                    oddCount = 0
-                                    oddCountHeight = 0
-                            print('| Couldn\'t find any matching, odd-paneled heights.')
-                            oddCount = 0        
-                except shutil.Error:
-                    shutil.copy(order, BatchDir)
-                    try:
-                        os.remove(order)
-                    except OSError:
-                        print('|> Could not remove ' + order)
-                except FileNotFoundError:
-                    print('|> Couldn\'t find order to move. \n|> File: ', order)
-    if (curBatchDirLength < (materialLength - 0.85)):
-        for order in glob.iglob(futureOrders + 'Repeat 2/Odd Panels/*.pdf'):
-            if (curBatchDirLength + float(order.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                continue
-            else:
-                try:
-                    shutil.move(order, BatchDir)
-                    if oddCount == 0:
-                        curBatchDirLength += float(order.split('/')[11].split('-')[11].split('L')[1])
-                        oddCount = 1
-                        oddCountHeight = float(order.split('/')[11].split('-')[13].split('H')[1].split('.pdf')[0])
-                    else:
-                        while oddCount == 1:
-                            for oddOrder in glob.iglob(lateOrders + 'Repeat 2/Odd Panels/*H' + str(oddCountHeight) +'.pdf'):
-                                if (curBatchDirLength + float(oddOrder.split('/')[11].split('-')[11].split('L')[1]) > (materialLength * 1.01)):
-                                    continue
-                                else:
-                                    shutil.move(oddOrder, BatchDir)
-                                    oddCount = 0
-                                    oddCountHeight = 0
-                            print('| Couldn\'t find any matching, odd-paneled heights.')
-                            oddCount = 0        
-                except shutil.Error:
-                    shutil.copy(order, BatchDir)
-                    try:
-                        os.remove(order)
-                    except OSError:
-                        print('|> Could not remove ' + order)
-                except FileNotFoundError:
-                    print('|> Couldn\'t find order to move. \n|> File: ', order)
 
 def transferFilesFromDrive():
     # Old name convention: 300014719(1)-Watercolor Herringbone-Wv-Samp-Rp 4-Qty 1-W9-H25
@@ -1071,41 +786,6 @@ def transferFilesFromDrive():
                             print(err)
     print('\n| Finished transferring files from Google Drive.')
     return main()
-
-
-def checkRepeatSize():
-    for printPDF in glob.iglob(gv.downloadDir + '*.pdf'):
-        printPDFFull = printPDF.split('/')[-1].split('-')[7]
-        printPDFrepeat = int(printPDF.split('/')[-1].split('-')[8].split('Rp ')[1])
-        if printPDFFull == 'Full':
-            if printPDFrepeat % 2 == 1:
-                try:
-                    shutil.move(printPDF, gv.needsAttention)
-                    print('| File has an odd repeat and has been moved to 4 Needs Attention')
-                    print('| File:', printPDF.split('/')[-1])
-                except shutil.Error:
-                    shutil.copy(printPDF, gv.needsAttention)
-                    try:
-                        os.remove(printPDF)
-                    except OSError:
-                        print('|> Could not successfully remove file.')
-                        print('|> File:', printPDF)
-                except FileNotFoundError:
-                    print('| Couldn\'t find the following file.')
-                    print('| File:', printPDF)
-            elif printPDFrepeat == 2:
-                continue
-            elif printPDFrepeat > 2:
-                try:
-                    batch.cropMultiPanelPDFs(printPDF)
-                except utils.PdfReadError:
-                    print('| Couldn\'t crop the panels for the following order. Please check non-repeat 2 folders.')
-                    continue
-
-    return
-
-
-    
 
 
 

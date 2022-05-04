@@ -1,14 +1,8 @@
-#!usr/bin/env python
+ #!usr/bin/env python
 # Series of functions that break apart the name of a PDF and return a specific value
 
-import os, shutil, math, datetime, time, json, glob, pikepdf
-import zipfile as zf
-from pathlib import Path
-from datetime import date, timedelta, datetime
-from sqlitedict import SqliteDict
-from PyPDF2 import PdfFileReader, PdfFileWriter, PdfFileMerger, utils
-from io import StringIO
-import subprocess
+import math, datetime
+from datetime import datetime
 
 def name(pdf):
     return pdf.split('/')[-1].split('.pdf')[0]
@@ -57,3 +51,14 @@ def width(pdf):
 
 def height(pdf):
     return float(name(pdf).split('-')[13].split('H')[1])
+
+def calculate_length(quantity, height):
+    quantity = int(quantity)
+    height = float(height)
+
+    first = math.floor(quantity / 2) #quantity divided by two, rounded down, to get the number of panels we can fit side by side
+    second = first + (quantity % 2) #quantity + 1 for any odd-quantitied items
+    third = height + .5 # height + .5 because there's a .5" gap between each row
+    length = second * third
+    return length
+

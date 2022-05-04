@@ -25,6 +25,8 @@ downloadDir = calderaDir + '3 Downloaded/'
 needsAttention = calderaDir + '4 Needs Attention/'
 sortingDir = calderaDir + '5 Sorted for Print/'
 
+full_length_split_percentage = 0.85 #85%. This is the percentage that batching will try to fill with full, then save the rest for samples.
+
 dirLookupDict = { #Dictionary for dynamically creating a directory path for sorting based on lookup tables
     'Sm':'Smooth/', #Smooth Folders
     'Smooth':'Smooth/',

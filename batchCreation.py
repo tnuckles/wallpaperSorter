@@ -1,76 +1,78 @@
 #!usr/bin/env python
 
-import os, shutil, math, datetime, time, json, glob, pikepdf
-import zipfile as zf
-from pathlib import Path
-from datetime import date, timedelta, datetime
-
-from PyPDF2 import PdfFileReader, PdfFileWriter, PdfFileMerger, utils
-from io import StringIO
-import subprocess
+import os, shutil, math, datetime, glob
+from datetime import  datetime
 
 import wallpaperSorterVariables as gv
 import getPdfData as getPdf
+import pdf_splitter
 
 today = datetime.today()
 
-def BatchOrdersMain():
-    options = 1,2,3,4,5,6,0
-    print('\n| Main Menu > Batch Orders')
-    print('| 1. Batch Smooth Full')
-    print('| 2. Batch Smooth Samples')
-    print('| 3. Batch Woven Full')
-    print('| 4. Batch Woven Samples')
-    print('| 5. Batch the whole damn thing')
-    print('| 0. Return to Main Menu.')
+# Definitions
+
+def batchCreationController():
+    material, material_length = getMaterialAndRollLength()
+    full_pdfs_to_batch, samplePdfsToBatch = getListOfPdfs(material)
+    sort_pdfs_by_length(full_pdfs_to_batch)
+    total_full_length, total_sample_length = getTotalLengthOfPdfs(full_pdfs_to_batch, samplePdfsToBatch)
+    if (total_full_length + total_sample_length) > ((material_length * .8) * 12):
+        length_for_full = decide_full_sample_split(total_full_length, total_sample_length, material_length)
+        new_batch_dict = build_batch_list(material_length, length_for_full, full_pdfs_to_batch, samplePdfsToBatch, total_sample_length)
+        make_batch_folder(new_batch_dict, material)
+    else:
+        print('| Remaning PDFs will not fill more than 80' + "%" + ' of a roll. Waiting for new orders to make a batch.')
+    
+    return batchCreationController()
+
+def getMaterialAndRollLength():
+    options = 1,2,3,4
+    print('\n| Specify material and roll length:')
+    print('| 1. Smooth, 150 Feet')
+    print('| 2. Woven, 100 Feet')
+    print('| 3. Smooth, Custom Length')
+    print('| 4. Woven, Custom Length')
     try:
         command = int(input('\n| Command > '))
     except ValueError:
-        print('\n| Please enter a number, not text.')
-        return BatchOrdersMain()
+        print('\n| Please enter a whole number, not text.')
     while int(command) not in options:
         print('\n| Not a valid choice.')
-        return BatchOrdersMain()
+        return getMaterialAndRollLength()
     if command == 1:
-        confirm = confirmBatch('Smooth', 'Full')
+        confirm = confirmBatch('Smooth', 149)
         if confirm == True:
-            batchingController('Smooth', 'Full')
-            return BatchOrdersMain()
-        elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return BatchOrdersMain()
+            return 'Smooth', 149*12
+        else:
+            return getMaterialAndRollLength()
     elif command == 2:
-        confirm = confirmBatch('Smooth', 'Sample')
+        confirm = confirmBatch('Woven', 99)
         if confirm == True:
-            batchingController('Smooth', 'Sample')
-            return BatchOrdersMain()
-        elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return BatchOrdersMain()
+            return 'Woven', 99*12
+        else:
+            return getMaterialAndRollLength()
     elif command == 3:
-        confirm = confirmBatch('Woven', 'Full')
-        if confirm == True:
-            batchingController('Woven', 'Full')
-            return BatchOrdersMain()
-        elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return BatchOrdersMain()
+        try:
+            length = int(input('\n| Please enter your Smooth length in feet > '))
+        except ValueError:
+            print('| Invalid input.')
+            return getMaterialAndRollLength()
+        confirm = confirmBatch('Smooth', length)
+        if confirm:
+            return 'Smooth', length
+        else:
+            return getMaterialAndRollLength()
     elif command == 4:
-        confirm = confirmBatch('Woven', 'Sample')
-        if confirm == True:
-            batchingController('Woven', 'Sample')
-            return BatchOrdersMain()
-        elif confirm == False:
-            print('\n| Returning to Batch Orders.')
-            return BatchOrdersMain()
-    elif command == 5:
-        batchingController('Woven', 'Full')
-        batchingController('Woven', 'Sample')
-        batchingController('Smooth', 'Full')
-        batchingController('Smooth', 'Sample')
-    elif command == 0:
-        print('| Returning to Main Menu.')
-        return
+        try:
+            length = int(input('\n| Please enter your Woven length in feet > '))
+        except ValueError:
+            print('| Invalid input.')
+            return getMaterialAndRollLength()
+        confirm = confirmBatch('Woven', length)
+        if confirm:
+            return 'Woven', length
+        else:
+            return getMaterialAndRollLength()
 
 def confirmBatch(material, orderSize):
     options = 1,2
@@ -90,473 +92,215 @@ def confirmBatch(material, orderSize):
     elif command == 2:
         return False
 
-def batchingController(material, orderSize):
-    print('\n| Starting', material, orderSize, 'Batching.')
-    materialLength = gv.dirLookupDict['MaterialLength'][material]
-    # materialLength = int(input('\n| Please input your starting material length in feet > '))
-    # while materialLength != type(int):
-    #     materialLength = int(input('\n| Please input your starting material length in feet > '))
-    batchDir = dirBuilder(material, orderSize)
-    findOrdersForPrintv3(batchDir, material, orderSize, (int(materialLength)))
-    removeEmptyBatchFolders(True)
-    # if orderSize == 'Full':
-    #     findOrdersForPrintv3(BatchDir, material, orderSize, (int(materialLength)))
-    #     removeEmptyBatchFolders(True)
-    # else:
-    #     findSampleOrdersForPrint(BatchDir, material, orderSize, (int(materialLength * 12)))
-    print('\n| Finished Batching', material, orderSize, 'orders.')
-
-def dirBuilder(material, orderSize):
-    BatchDir = gv.batchFoldersDir + 'Batch #' + str(gv.globalBatchCounter['batchCounter']) + ' ' + today.strftime('%m-%d-%y') + ' ' + material + ' ' + orderSize + ' L0'
-    gv.globalBatchCounter['batchCounter'] += 1
-    #BatchDir = doesDirExist(material, orderSize)
-    os.mkdir(BatchDir)
-    print('| New Batch Folder: Batch #' + str(gv.globalBatchCounter['batchCounter']-1))
-    print()
-    return BatchDir
-
-def findOrdersForPrintv3(batchDir, material, orderSize, materialLength):
-    pdfMaterial = gv.dirLookupDict[material]
-    pdfSize = gv.dirLookupDict[orderSize]
-    
-    listOfPdfsToBatch = {
-        'OTOrders' : glob.iglob(gv.sortingDir + '1 - OT Orders/' + pdfMaterial + pdfSize + '**/*.pdf', recursive=True),
-        'lateOrders' : glob.iglob(gv.sortingDir + '2 - Late/' + pdfMaterial + pdfSize + '**/*.pdf', recursive=True),
-        'todayOrders' : glob.iglob(gv.sortingDir + '3 - Today/' + pdfMaterial + pdfSize + '**/*.pdf', recursive=True),
-        'futureOrders' : glob.iglob(gv.sortingDir + '4 - Future/' + pdfMaterial + pdfSize + '**/*.pdf', recursive=True),
+def getListOfPdfs(material):
+    pdf_material = gv.dirLookupDict[material]
+    fullPdfsToBatch = {
+        'OTOrders' : glob.glob(gv.sortingDir + '1 - OT Orders/' + pdf_material + 'Full/**/*.pdf', recursive=True),
+        'lateOrders' : glob.glob(gv.sortingDir + '2 - Late/' + pdf_material + 'Full/**/*.pdf', recursive=True),
+        'todayOrders' : glob.glob(gv.sortingDir + '3 - Today/' + pdf_material + 'Full/**/*.pdf', recursive=True),
+        'futureOrders' : glob.glob(gv.sortingDir + '4 - Future/' + pdf_material + 'Full/**/*.pdf', recursive=True),
         }
+    samplePdfsToBatch = {
+        'OTOrders' : glob.glob(gv.sortingDir + '1 - OT Orders/' + pdf_material + 'Sample/*.pdf', recursive=True),
+        'lateOrders' : glob.glob(gv.sortingDir + '2 - Late/' + pdf_material + 'Sample/*.pdf', recursive=True),
+        'todayOrders' : glob.glob(gv.sortingDir + '3 - Today/' + pdf_material + 'Sample/*.pdf', recursive=True),
+        'futureOrders' : glob.glob(gv.sortingDir + '4 - Future/' + pdf_material + 'Sample/*.pdf', recursive=True),
+        }
+    return fullPdfsToBatch, samplePdfsToBatch
 
-    OTOrders = listOfPdfsToBatch['OTOrders']
-    lateOrders = listOfPdfsToBatch['lateOrders']
-    todayOrders = listOfPdfsToBatch['todayOrders']
-    futureOrders = listOfPdfsToBatch['futureOrders']
+def sort_pdfs_by_length(pdf_array):
+    for due_date in pdf_array:
+        list_to_sort = []
+        sorted_list = []
+        for print_pdf in pdf_array[due_date]:
+            pdf_length = getPdf.length(print_pdf)
+            list_to_sort.append((pdf_length, print_pdf))
+        list_to_sort.sort(reverse=True, key=lambda pdf: pdf[0])
+        pdf_array[due_date] = list_to_sort
+        for print_pdf in pdf_array[due_date]:
+            sorted_list.append(print_pdf[1])
+        pdf_array[due_date] = sorted_list
+    return pdf_array
 
-    foldersToCheck2p = glob.glob(gv.sortingDir + '*/' + pdfMaterial + pdfSize + '**/*.pdf', recursive=True)
-    curBatchDirLength = 0
-    findOdd = False
-    oddMatchHeight = 0
-    loopCounter = 0
-    while len(foldersToCheck2p) > 0:
-        ### Come back to this later. For some reason, the folders to check variable doesn't update so python always evaluates it to more than 0 after it's initially created. I plugged in a loop counter to temporarily fix it.
-        while (curBatchDirLength < (materialLength - (materialLength * 0.9))) and loopCounter < 1:
-            for printPDF in OTOrders:
-                curBatchDirLength, findOdd, oddMatchHeight = batchPdfCheck(printPDF, batchDir, curBatchDirLength, findOdd, oddMatchHeight, materialLength)
-            for printPDF in lateOrders:
-                curBatchDirLength, findOdd, oddMatchHeight = batchPdfCheck(printPDF, batchDir, curBatchDirLength, findOdd, oddMatchHeight, materialLength)
-            for printPDF in todayOrders:
-                curBatchDirLength, findOdd, oddMatchHeight = batchPdfCheck(printPDF, batchDir, curBatchDirLength, findOdd, oddMatchHeight, materialLength)
-            for printPDF in futureOrders:
-                curBatchDirLength, findOdd, oddMatchHeight = batchPdfCheck(printPDF, batchDir, curBatchDirLength, findOdd, oddMatchHeight, materialLength)
-            loopCounter += 1
-        else:
-            newBatchName = batchDir.split('/')[6].split(' L')[0] + ' L' + str(curBatchDirLength)
-            os.rename(batchDir, gv.batchFoldersDir + newBatchName)
-            print('\n| Batch Finished.\n| Batch Folder: ', newBatchName, '\n| Length:', str(round(curBatchDirLength/12, 2)), 'feet (' + str(curBatchDirLength), 'inches)')
-            curBatchDirLength = 0
-            batchDir = dirBuilder(material, orderSize)
-            #materialLength = input('| Please input your material length. > ')
-            return findOrdersForPrintv3(batchDir, material, orderSize, int(materialLength))
+def getTotalLengthOfPdfs(fullPdfsToBatch, samplePdfsToBatch):  
+    fullLength = 0
+    sampleLength = 0
+    for dueDate in fullPdfsToBatch:
+        for printPdf in fullPdfsToBatch[dueDate]:
+            fullLength += getPdf.length(printPdf)
+    for dueDate in samplePdfsToBatch:
+        for printPdf in samplePdfsToBatch[dueDate]:
+            sampleLength += getPdf.length(printPdf)
+    sampleLength = math.floor(sampleLength / 2)
+    return fullLength, sampleLength
 
-def removeEmptyBatchFolders(safe):
-    for BatchFolder in glob.iglob(gv.batchFoldersDir + '*'):
-        BatchLength = float(BatchFolder.split('/')[-1].split(' ')[-1].split('L')[1])
-        if safe == True:
-            if os.path.isdir(BatchFolder) == False:
-                continue
-            elif (len(os.listdir(BatchFolder)) == 0) and (BatchLength == 0):
-                os.rmdir(BatchFolder)
-        else:
-            if os.path.isdir(BatchFolder) == False:
-                continue
-            elif (len(os.listdir(BatchFolder)) == 0):
-                os.rmdir(BatchFolder)
-
-def batchPdfCheck(printPDF, batchDir, curBatchDirLength, findOdd, oddMatchHeight, materialLength):
-    friendlyPdfName = getPdf.friendlyName(printPDF) 
-    pdfLength = getPdf.length(printPDF)
-    pdfOddOrEven = getPdf.oddOrEven(printPDF)
-    pdfHeight = getPdf.height(printPDF)
-    if (curBatchDirLength + pdfLength) > (materialLength * 1.02):
-        print('| PDF will exceed material length.\n| PDF:', friendlyPdfName)
-        print()
-        return curBatchDirLength, findOdd, oddMatchHeight
+def decide_full_sample_split(full_length, sample_length, material_length):
+    percent_length_for_full = .80
+    
+    if full_length < (material_length * percent_length_for_full):
+        percent_length_for_full = 1 - round(full_length / material_length, 2)
+        return percent_length_for_full
+    elif sample_length > material_length * .30:
+        return percent_length_for_full
+    elif sample_length == 0:
+        percent_length_for_full = 1
+        return percent_length_for_full
     else:
-        if (findOdd == False) and (pdfOddOrEven == 0):
-            success = tryToMovePDF(printPDF, batchDir, friendlyPdfName)
-            if success == True:
-                checkRepeatDuringBatching(batchDir + '/' + printPDF.split('/')[-1], batchDir)
-                curBatchDirLength += pdfLength
-                findOdd = False
-                oddMatchHeight = 0
-                return curBatchDirLength, findOdd, oddMatchHeight
-        elif (findOdd == False) and (pdfOddOrEven == 1):
-            success = tryToMovePDF(printPDF, batchDir, friendlyPdfName)
-            if success == True:
-                checkRepeatDuringBatching(batchDir + '/' + printPDF.split('/')[-1], batchDir)
-                curBatchDirLength += pdfLength
-                findOdd = True
-                oddMatchHeight = pdfHeight
-                return curBatchDirLength, findOdd, oddMatchHeight
-        elif (findOdd == True) and (pdfOddOrEven == 0):
-            return curBatchDirLength, findOdd, oddMatchHeight
-        elif (findOdd == True) and (pdfOddOrEven == 1):
-            if oddMatchHeight != pdfHeight:
-                return curBatchDirLength, findOdd, oddMatchHeight
-            else:
-                success = tryToMovePDF(printPDF, batchDir, friendlyPdfName)
-                if success == True:
-                    checkRepeatDuringBatching(batchDir + '/' + printPDF.split('/')[-1], batchDir)
-                    curBatchDirLength += pdfLength
-                    findOdd = False
-                    oddMatchHeight = 0
-                    return curBatchDirLength, findOdd, oddMatchHeight
-    return curBatchDirLength, findOdd, oddMatchHeight
+        percent_length_for_full = 1 - round(sample_length / material_length, 2)
+        return percent_length_for_full
+
+def add_fill_ins(new_batch_dict):
+    color_guides = gv.calderaDir + 'z_Storage/Utility/LvD Color Chart Rotated.pdf'
+    roll_stickers = gv.calderaDir + 'z_Storage/Utility/LvD Roll-Stickers Rotated.pdf'
+    batch_length = new_batch_dict['length']
+    batch_list = new_batch_dict['list']
+    
+    batch_list.append(color_guides)
+    batch_length += 9.5
+    batch_list.append(color_guides)
+    batch_list.append(color_guides)
+    batch_length += 9.5
+    batch_list.append(color_guides)
+    batch_list.append(color_guides)
+    batch_length += 9.5
+    batch_list.append(roll_stickers)
+    return new_batch_dict
 
 def tryToMovePDF(printPDF, BatchDir, friendlyPdfName):
     try:
         shutil.move(printPDF, BatchDir + '/')
-        return True
+        return
     except shutil.Error:
         shutil.copy(printPDF, BatchDir)
         try:
             os.remove(printPDF)
-            return True
+            return
         except OSError:
             print('|> Moved PDF to batch folder, but couldn\'t remove the original file. Please remove the original file.')
             print('|> PDF:', friendlyPdfName)
             print('|> Path:', printPDF)
-            return False
+            return
     except FileNotFoundError:
         print('|> Couldn\'t move PDF. Please check to make sure it exists.')
         print('|> PDF:', friendlyPdfName)
         print('|> Path:', printPDF)
-        return False
+        return
 
-def checkRepeatDuringBatching(pdf, batchDir):
-    printPDFFull = pdf.split('/')[-1].split('-')[7]
-    printPDFrepeat = int(pdf.split('/')[-1].split('-')[8].split('Rp ')[1])
-    if printPDFFull == 'Full':
-        if printPDFrepeat % 2 == 1:
-            try:
-                shutil.move(pdf, gv.needsAttention)
-                print('| File has an odd repeat and has been moved to 4 Needs Attention')
-                print('| File:', pdf.split('/')[-1])
-            except shutil.Error:
-                shutil.copy(pdf, gv.needsAttention)
-                try:
-                    os.remove(pdf)
-                except OSError:
-                    print('|> Could not successfully remove file.')
-                    print('|> File:', pdf)
-                    return
-            except FileNotFoundError:
-                print('| Couldn\'t find the following file.')
-                print('| File:', pdf)
-                return
-        elif printPDFrepeat == 2:
-            return
-        elif printPDFrepeat > 2:
-            try:
-                cropMultiPanelPDFs(pdf, batchDir)
-            except utils.PdfReadError:
-                print('| Couldn\'t crop the panels for the following pdf. Please check the batch folder')
-                print('| PDF:', pdf.split('/')[-1])
-                return
+def build_batch_list(material_length, length_for_full, full_pdfs_to_batch, samplePdfsToBatch, total_sample_length):
+    new_batch = {
+        'list_of_pdfs': [],
+        'batch_length': 0
+    }
 
-def cropMultiPanelPDFs(printPDFToSplit, batchDir):
-    orderDict = {
-        'fileName':printPDFToSplit.split('.pdf')[0],
-        'orderNumber': getPdf.orderNumber(printPDFToSplit),
-        'orderItem': getPdf.orderItem(printPDFToSplit),
-        'orderDueDate': getPdf.dueDate(printPDFToSplit),
-        'shipVia': getPdf.shipMethod(printPDFToSplit),
-        'material': getPdf.material(printPDFToSplit),
-        'orderSize': getPdf.size(printPDFToSplit),
-        'repeat': getPdf.repeat(printPDFToSplit),
-        'repeatPanels': int(getPdf.repeat(printPDFToSplit) / 2),
-        'quantity': getPdf.quantity(printPDFToSplit),
-        'oddOrEven': getPdf.oddOrEven(printPDFToSplit),
-        'templateName': getPdf.templateName(printPDFToSplit),
-        'orderLength': getPdf.length(printPDFToSplit),
-        'orderWidth': getPdf.width(printPDFToSplit),
-        'orderHeight': getPdf.height(printPDFToSplit),
-        'multiPagePDFs' : [],
-        'PDFPanelsToCombine' : [],
-        }
-    
-    orderDict['CroppedPDFName'] = orderDict['fileName'].split(orderDict['templateName'])[0] + orderDict['templateName'] + ' Split' + orderDict['fileName'].split(orderDict['templateName'])[1] + '.pdf'
+    length_for_full = math.floor(material_length * length_for_full)
+    length_for_samples = 0
+    find_odd = False
+    odd_match_height = 0
+    sample_odd_count = True
+    batch_length = 0
+    batch_list = []
+    loop_counter = 0
 
-    #print('| Working file\n| ', printPDFToSplit)
-    #for entry in orderDict:
-    #    print('|    ', orderDict[entry])
-
-    os.chdir(batchDir)
-    for page in range(orderDict['repeatPanels']):
-        writer = PdfFileWriter()
-        inputPDF = open(printPDFToSplit,'rb')
-        cropPDF = PdfFileReader(inputPDF)
-        page = cropPDF.getPage(0)
-        lowerLeftX = 0
-        lowerLeftY = 0
-        upperRightX = 1800
-        upperRightY = cropPDF.getPage(0).cropBox.getUpperRight()[1]
-        for cropCount in range(orderDict['repeatPanels']):
-            page.trimBox.lowerLeft = (lowerLeftX, lowerLeftY)
-            page.trimBox.upperRight = (upperRightX, upperRightY)
-            page.bleedBox.lowerLeft = (lowerLeftX, lowerLeftY)
-            page.bleedBox.upperRight = (upperRightX, upperRightY)
-            page.cropBox.lowerLeft = (lowerLeftX, lowerLeftY)
-            page.cropBox.upperRight = (upperRightX, upperRightY)
-            writer.addPage(page)
-            lowerLeftX += 1728
-            upperRightX += 1728
-            printPDFName = batchDir + '/' + orderDict['orderNumber'] + '-' + orderDict['orderItem'] + '-' + str(cropCount + 1) + '.pdf'
-            if printPDFName in orderDict['multiPagePDFs']:
-                continue
-            else:
-                orderDict['multiPagePDFs'].append(printPDFName)
-            with open(printPDFName, "wb") as outputPDF:
-                writer.write(outputPDF)
-        inputPDF.close()
-
-    for PDF in orderDict['multiPagePDFs']:
-        writer = PdfFileWriter()
-        try:
-            printPDF = PdfFileReader(open(PDF, "rb"))
-        except utils.PdfReadError:
-            print('| Couldn\'t fix file. Skipping.\n| File:', PDF)
-            continue
-        numOfPages = printPDF.getNumPages()
-
-        for pageNum in range(numOfPages):
-            if (pageNum + 1) < numOfPages:
-                continue
-            else:
-                writer.addPage(printPDF.getPage(pageNum))
-        newNamePt1 = orderDict['fileName'].split(orderDict['templateName'])[0]
-        newNamePt2 = orderDict['fileName'].split(orderDict['templateName'])[1]
-        panelNum = orderDict['templateName'] + ' Panel ' + str(pageNum + 1)
-        newName = newNamePt1 + panelNum + newNamePt2 + '.pdf'
-        if newName in orderDict['PDFPanelsToCombine']:
-            continue
-        else:
-            orderDict['PDFPanelsToCombine'].append(newName)
-
-        with open(newName, 'wb') as outputPDF:
-            writer.write(outputPDF)
-    
-    splitAndCombinedPDF = combineSplitPDFS(orderDict['PDFPanelsToCombine'], orderDict['CroppedPDFName'])
-
-    for PDF in orderDict['multiPagePDFs']:
-        os.remove(PDF)
-    for PDF in orderDict['PDFPanelsToCombine']:
-        os.remove(PDF)
-
-    print('| File has been split apart, cropped, and recombined.\n| File:', splitAndCombinedPDF.split('/')[-1])
-
-    if Path(gv.calderaDir + '# Past Orders/Original Files/').exists() == False:
-        os.mkdir(gv.calderaDir + '# Past Orders/Original Files')
-    
-    storageDir = gv.calderaDir + '# Past Orders/Original Files/'
-    
-    try:
-        shutil.move(printPDFToSplit, storageDir)
-    except shutil.Error:
-        shutil.copy(printPDFToSplit, storageDir)
-        os.remove(printPDFToSplit)
-
-def combineSplitPDFS(listOfPDFs, saveLocation):
-    masterPDF = PdfFileMerger()
-
-    templateName = getPdf.templateName(saveLocation)
-    nameWithoutSplit = saveLocation.split(templateName)[0] + templateName.split(' Split')[0] + saveLocation.split(templateName)[1]
-    saveLocation = nameWithoutSplit
-
-    for PDFToMerge in listOfPDFs:
-        masterPDF.append(PdfFileReader(PDFToMerge, 'rb'))
-    masterPDF.write(saveLocation)
-
-    return saveLocation
-
-def decompress_pdf(temp_buffer):
-    temp_buffer.seek(0)  # Make sure we're at the start of the file.
-
-    process = subprocess.Popen(['pdftk.exe',
-                                '-',  # Read from stdin.
-                                'output',
-                                '-',  # Write to stdout.
-                                'uncompress'],
-                                stdin=temp_buffer,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-
-    return StringIO(stdout)
-
-def buildController():
-    readyToPrint = gatherReadyToBatchPdfs()
-    BatchDir = gv.batchFoldersDir + 'In Progress'
-    os.mkdir(BatchDir)
-    for material in readyToPrint:
-        for priority in readyToPrint[material]:
-            listOfPdfsToBatch = readyToPrint[material][priority]
-            adjustedMaterialLength = gv.dirLookupDict['MaterialLength'][material]*0.85
-            mainBuildBatchLoop(listOfPdfsToBatch, adjustedMaterialLength, BatchDir)
-
-def mainBuildBatchLoop(listOfPdfsToBatch, adjustedMaterialLength, BatchDir):
-    curBatchDirLength = 0
-    findOdd = False
-    oddMatchHeight = 0
-    loopCounter = 0
-    
-    while (curBatchDirLength < adjustedMaterialLength) and (loopCounter < 1):
-        for printPDF in listOfPdfsToBatch:
-
-            friendlyPdfName = getPdf.orderNumber(printPDF), getPdf.templateName(printPDF), getPdf.orderItem(printPDF) 
-            pdfLength = getPdf.length(printPDF)
-            pdfOddOrEven = getPdf.oddOrEven(printPDF)
-            pdfHeight = getPdf.height(printPDF)
-            if (curBatchDirLength + pdfLength) > (adjustedMaterialLength * 1.02):
-                print('| PDF will exceed material length.\n| PDF:', friendlyPdfName)
-                print()
-            else:
-                if (findOdd == False) and (pdfOddOrEven == 0):
-                    success = tryToMovePDF(printPDF, BatchDir, friendlyPdfName, pdfLength)
-                    if success == True:
-                        curBatchDirLength += pdfLength
-                        findOdd = False
-                elif (findOdd == False) and (pdfOddOrEven == 1):
-                    success = tryToMovePDF(printPDF, BatchDir, friendlyPdfName, pdfLength)
-                    if success == True:
-                        curBatchDirLength += pdfLength
-                        findOdd = True
-                        oddMatchHeight = pdfHeight
-                elif (findOdd == True) and (pdfOddOrEven == 0):
+    while (batch_length < length_for_full) and (loop_counter == 0):
+        for due_date in full_pdfs_to_batch:
+            for print_pdf in full_pdfs_to_batch[due_date]:
+                pdf_length = getPdf.length(print_pdf)
+                pdf_odd_or_even = getPdf.oddOrEven(print_pdf)
+                pdf_height = getPdf.height(print_pdf)
+                if (batch_length + pdf_length) > (length_for_full):
                     continue
-                elif (findOdd == True) and (pdfOddOrEven == 1):
-                    if oddMatchHeight != pdfHeight:
+                else:
+                    if (find_odd == False) and (pdf_odd_or_even == 0):
+                        batch_list.append(print_pdf)
+                        batch_length += pdf_length
+                    elif (find_odd == False) and (pdf_odd_or_even == 1):
+                        batch_list.append(print_pdf)
+                        batch_length += pdf_length
+                        find_odd = True
+                        odd_match_height = pdf_height
+                    elif (find_odd == True) and (pdf_odd_or_even == 0):
                         continue
-                    else:
-                        success = tryToMovePDF(printPDF, BatchDir, friendlyPdfName, pdfLength)
-                        if success == True:
-                            curBatchDirLength += pdfLength
-                            findOdd = False
-                            oddMatchHeight = 0
-        loopCounter += 1  
+                    elif (find_odd == True) and (pdf_odd_or_even == 1):
+                        if odd_match_height != pdf_height:
+                            continue
+                        else:
+                            batch_list.append(print_pdf)
+                            length_to_add = pdf_length - (pdf_height + .5)
+                            batch_length += length_to_add
+                            find_odd = False
+                            odd_match_height = 0
+        loop_counter += 1
+    
+    length_for_samples = material_length - batch_length - 10
+    if length_for_samples > total_sample_length:
+        for due_date in samplePdfsToBatch:
+            sample_height_counter = ''
+            for print_pdf in samplePdfsToBatch[due_date]:
+                if sample_height_counter == False:
+                    pdf_length = getPdf.length(print_pdf)
+                    batch_list.append(print_pdf)
+                    sample_height_counter = True
+                else:
+                    pdf_length = getPdf.length(print_pdf)
+                    batch_list.append(print_pdf)
+                    batch_length += pdf_length
+                    sample_height_counter = False
+    else:
+        for due_date in samplePdfsToBatch:
+            for print_pdf in samplePdfsToBatch[due_date]:
+                pdf_length = getPdf.length(print_pdf)
+                pdf_odd_or_even = getPdf.oddOrEven(print_pdf)
+                pdf_height = getPdf.height(print_pdf)
+                if (batch_length + pdf_length) > material_length:
+                    break
+                else:
+                    if (sample_odd_count == False) and (pdf_odd_or_even == 0):
+                        batch_list.append(print_pdf)
+                        batch_length += pdf_length
+                    elif (sample_odd_count == False) and (pdf_odd_or_even == 1):
+                        batch_list.append(print_pdf)
+                        batch_length += pdf_length
+                        sample_odd_count = True
+                    elif (sample_odd_count == True) and (pdf_odd_or_even == 0):
+                        continue
+                    elif (sample_odd_count == True) and (pdf_odd_or_even == 1):
+                            batch_list.append(print_pdf)
+                            length_to_add = pdf_length - (pdf_height + .5)
+                            batch_length += length_to_add
+                            sample_odd_count = False
 
-def gatherReadyToBatchPdfs():
-    dirsToCheck = {
-        'orderTroubles' : (glob.iglob(gv.sortingDir + '1 - OT Orders/' + '**/*.pdf', recursive=True), 'orderTroubles'),
-        'lateOrders' : (glob.iglob(gv.sortingDir + '2 - Late/' + '**/*.pdf', recursive=True), 'lateOrders'),
-        'todaysOrders' : (glob.iglob(gv.sortingDir + '3 - Today/' + '**/*.pdf', recursive=True),  'todaysOrders'),
-        'futureOrders' : (glob.iglob(gv.sortingDir + '4 - Future/' + '**/*.pdf', recursive=True), 'futureOrders'),
-    }
+    new_batch['list_of_pdfs'] = batch_list
+    new_batch['batch_length'] = batch_length
 
-    possibleOrders = {
-            'Wv' : {
-                'orderTroubles' : [],
-                'lateOrders' : [],
-                'todaysOrders' : [],
-                'futureOrders' : [],
-            },
-            'Sm' : {
-                'orderTroubles' : [],
-                'lateOrders' : [],
-                'todaysOrders' : [],
-                'futureOrders' : [],
-            },
-            'Tr' : {
-                'orderTroubles' : [],
-                'lateOrders' : [],
-                'todaysOrders' : [],
-                'futureOrders' : [],
-            },
-        }
+    if (new_batch['batch_length'] > 1900) or (batch_length > 1900):
+        print(batch_length)
+        print(new_batch['batch_length'])
+        print(length_for_samples)
+        print(length_for_full)
+        print(material_length)
+        print(total_sample_length)
 
-    for dir in dirsToCheck:
-        for printPdf in dirsToCheck[dir][0]:
-            material = getPdf.material(printPdf)
-            possibleOrders[material][dirsToCheck[dir][1]].append(printPdf)
+    return new_batch
 
-    # for printPDF in OTOrders:
-    #     pdfMaterial = getPdf.material(printPDF)
-    #     possibleOrders[pdfMaterial]['orderTroubles'].append(printPDF)
-    # for printPDF in lateOrders:
-    #     pdfMaterial = getPdf.material(printPDF)
-    #     possibleOrders[pdfMaterial]['lateOrders'].append(printPDF)
-    # for printPDF in todayOrders:
-    #     pdfMaterial = getPdf.material(printPDF)
-    #     possibleOrders[pdfMaterial]['todaysOrders'].append(printPDF)
-    # for printPDF in futureOrders:
-    #     pdfMaterial = getPdf.material(printPDF)
-    #     possibleOrders[pdfMaterial]['futureOrders'].append(printPDF)
+def make_batch_folder(new_batch_dict, material):
+    batch_directory = gv.batchFoldersDir + 'Batch #' + str(gv.globalBatchCounter['batchCounter']) + ' ' + material + ' L' + str(new_batch_dict['batch_length'])
+    os.mkdir(batch_directory)
+    gv.globalBatchCounter['batchCounter'] += 1
+    for print_pdf in new_batch_dict['list_of_pdfs']:
+        pdf_friendly_name = getPdf.friendlyName
+        if print_pdf.split('/')[-1] == 'LvD Color Chart Rotated.pdf':
+            shutil.copy(print_pdf, batch_directory)
+        elif print_pdf.split('/')[-1] == 'LvD Roll-Stickers Rotated.pdf':
+            shutil.copy(print_pdf, batch_directory)
+        else:
+            pdf_friendly_name = getPdf.friendlyName
+            tryToMovePDF(print_pdf, batch_directory, pdf_friendly_name)
+    print('| New Batch:')
+    print('| Material:', material)
+    print('| Length:', new_batch_dict['batch_length'])
+    batch_orders = glob.iglob(batch_directory + '/*.pdf')
+    for print_pdf in batch_orders:
+        pdf_repeat = getPdf.repeat(print_pdf)
+        if pdf_repeat > 2:
+            split_pdf_panels(print_pdf)
 
-    return possibleOrders
-
-def buildBatchController():
-    # OTOrders = gv.sortingDir + '1 - OT Orders/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-    # lateOrders = gv.sortingDir + '2 - Late/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-    # todayOrders = gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize] 
-    # futureOrders = gv.sortingDir + '4 - Future/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
-
-    percentLengthForFull = 0.85
-
-    currentBatches = {
-        'Wv' : {
-            'materialLength' : gv.dirLookupDict['MaterialLength']['Woven'],
-            'lengthForFull' : currentBatches['materialLength'] * percentLengthForFull, # is an int
-            'batchLength' : 0,
-            'priority' : '', # should say the highest priority in the batch: (OT), (L)ate, (T)oday, or (F)uture)
-            'sizeCounts' : {
-                'full' : 0,
-                'samp' : 0
-            },
-            'pdfs' : [],
-        },
-        'Sm' : {
-            'materialLength' : gv.dirLookupDict['MaterialLength']['Smooth'],
-            'lengthForFull' : currentBatches['materialLength'] * percentLengthForFull, # is an int
-            'batchLength' : 0,
-            'priority' : '', # should say the highest priority in the batch: (OT), (L)ate, (T)oday, or (F)uture)
-            'sizeCounts' : {
-                'full' : 0,
-                'samp' : 0
-            },
-            'pdfs' : [],
-        },
-        'Tr' : {
-            'materialLength' : gv.dirLookupDict['MaterialLength']['Traditional'],
-            'lengthForFull' : currentBatches['materialLength'] * percentLengthForFull, # is an int
-
-            'batchLength' : 0,
-            'priority' : '', # should say the highest priority in the batch: (OT), (L)ate, (T)oday, or (F)uture)
-            'sizeCounts' : {
-                'full' : 0,
-                'samp' : 0
-            },
-            'pdfs' : [],
-        },
-    }
-
-    readyToPrint = gatherReadyToBatchPdfs()
-
-    for materialDict in currentBatches:
-        curBatchLength = currentBatches[materialDict]['batchLength']
-        while curBatchLength < currentBatches[materialDict]['lengthForFull']:
-            return
-
-    '''
-    Lets do some pseudo code!
-    First, get the total length of material (let's say 150 for smooth)
-    then, look for full 2' repeat orders 
-    add them to the current Batch until the Batch length is 
-    repeat until Batch is 85% of material length OR until there are no more full, 2' repeat orders
-    once 85% of material length is exceeded, search for 13% worth of samples OR until there are no additional samples
-    once that 13% has been met or exceeded, add 5% of color guides.
-    Once that 5% has been met, complete the Batch.
-
-    '''
-
-    # findFull2pOrders()
-    # findSampleOrders()
-    # findColorGuides()
