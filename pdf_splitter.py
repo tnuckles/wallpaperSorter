@@ -60,7 +60,7 @@ def checkRepeatSize():
                 continue
             elif printPDFrepeat > 2:
                 try:
-                    batch.cropMultiPanelPDFs(printPDF)
+                    cropMultiPanelPDFs(printPDF)
                 except utils.PdfReadError:
                     print('| Couldn\'t crop the panels for the following order. Please check non-repeat 2 folders.')
                     continue
@@ -213,17 +213,17 @@ def combineSplitPDFS(listOfPDFs, saveLocation):
 
     return saveLocation
 
-def decompress_pdf(temp_buffer):
-    temp_buffer.seek(0)  # Make sure we're at the start of the file.
+# def decompress_pdf(temp_buffer):
+#     temp_buffer.seek(0)  # Make sure we're at the start of the file.
 
-    process = subprocess.Popen(['pdftk.exe',
-                                '-',  # Read from stdin.
-                                'output',
-                                '-',  # Write to stdout.
-                                'uncompress'],
-                                stdin=temp_buffer,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
+#     process = subprocess.Popen(['pdftk.exe',
+#                                 '-',  # Read from stdin.
+#                                 'output',
+#                                 '-',  # Write to stdout.
+#                                 'uncompress'],
+#                                 stdin=temp_buffer,
+#                                 stdout=subprocess.PIPE,
+#                                 stderr=subprocess.PIPE)
+#     stdout, stderr = process.communicate()
 
-    return StringIO(stdout)
+#     return StringIO(stdout)
