@@ -1,7 +1,9 @@
 #!usr/bin/env python
 
 import os, shutil, math, datetime, glob
+from PyPDF2 import utils
 from datetime import  datetime
+
 
 import wallpaperSorterVariables as gv
 import getPdfData as getPdf
@@ -16,7 +18,7 @@ def batchCreationController():
     full_pdfs_to_batch, samplePdfsToBatch = getListOfPdfs(material)
     sort_pdfs_by_length(full_pdfs_to_batch)
     total_full_length, total_sample_length = getTotalLengthOfPdfs(full_pdfs_to_batch, samplePdfsToBatch)
-    if (total_full_length + total_sample_length) > ((material_length * .8) * 12):
+    if (total_full_length + total_sample_length) > ((material_length * .8)):
         length_for_full = decide_full_sample_split(total_full_length, total_sample_length, material_length)
         new_batch_dict = build_batch_list(material_length, length_for_full, full_pdfs_to_batch, samplePdfsToBatch, total_sample_length)
         make_batch_folder(new_batch_dict, material)
@@ -284,6 +286,7 @@ def build_batch_list(material_length, length_for_full, full_pdfs_to_batch, sampl
 
 def make_batch_folder(new_batch_dict, material):
     batch_directory = gv.batchFoldersDir + 'Batch #' + str(gv.globalBatchCounter['batchCounter']) + ' ' + material + ' L' + str(new_batch_dict['batch_length'])
+    batch_number = str(gv.globalBatchCounter['batchCounter'])
     os.mkdir(batch_directory)
     gv.globalBatchCounter['batchCounter'] += 1
     for print_pdf in new_batch_dict['list_of_pdfs']:
@@ -295,12 +298,16 @@ def make_batch_folder(new_batch_dict, material):
         else:
             pdf_friendly_name = getPdf.friendlyName
             tryToMovePDF(print_pdf, batch_directory, pdf_friendly_name)
-    print('| New Batch:')
+    print('\n| New Batch:', batch_number)
     print('| Material:', material)
     print('| Length:', new_batch_dict['batch_length'])
     batch_orders = glob.iglob(batch_directory + '/*.pdf')
     for print_pdf in batch_orders:
         pdf_repeat = getPdf.repeat(print_pdf)
-        if pdf_repeat > 2:
-            split_pdf_panels(print_pdf)
-
+        pdf_order_size = getPdf.size(print_pdf)
+        if (pdf_repeat > 2) and (pdf_order_size == 'Full'):
+            try:
+                pdf_splitter.cropMultiPanelPDFs(print_pdf, batch_directory)
+            except utils.PdfReadError: 
+                print('| Couldn\'t split file. In case it\'s needed, a copy of the original file is in "#Past Orders/Original Files"')
+                print('| PDF:', getPdf.friendlyName(print_pdf))

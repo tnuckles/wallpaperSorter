@@ -1,11 +1,8 @@
 #!usr/bin/env python
 
-import os, shutil, math, datetime, time, json, glob, pikepdf
-import zipfile as zf
-from pathlib import Path
-from datetime import date, timedelta, datetime
-from PyPDF2 import PdfFileReader, PdfFileWriter, PdfFileMerger, utils
-import subprocess
+import os, shutil, glob, pikepdf
+from datetime import date
+from PyPDF2 import PdfFileReader, PdfFileWriter, utils
 
 import getPdfData as getPdf
 import wallpaperSorterVariables as gv
@@ -98,7 +95,32 @@ def checkRepeatDuringBatching(pdf, batchDir):
                 print('| PDF:', pdf.split('/')[-1])
                 return
 
+def determine_panel_quantity(quantity, repeat):   
+    #these 3 variables are for testing; delete them later.
+    
+    quantity_per_panel_dict = {}
+
+    quantity_counter = 0
+    repeat = int(repeat / 2)
+    for panel in range(repeat):
+        quantity_per_panel_dict[panel + 1] = 0
+
+    while quantity_counter < quantity:
+        for panel in range(repeat):
+            panel_num = panel+1
+            quantity_per_panel_dict[panel_num] += 1
+            quantity_counter += 1
+            if quantity_counter == quantity:
+                break
+            elif panel_num == repeat:
+                panel = 0
+
+    return quantity_per_panel_dict
+
 def cropMultiPanelPDFs(printPDFToSplit, batchDir):
+    storageDir = gv.calderaDir + '# Past Orders/Original Files/'   
+    shutil.copy(printPDFToSplit, storageDir)
+    
     orderDict = {
         'fileName':printPDFToSplit.split('.pdf')[0],
         'orderNumber': getPdf.orderNumber(printPDFToSplit),
@@ -121,9 +143,7 @@ def cropMultiPanelPDFs(printPDFToSplit, batchDir):
     
     orderDict['CroppedPDFName'] = orderDict['fileName'].split(orderDict['templateName'])[0] + orderDict['templateName'] + ' Split' + orderDict['fileName'].split(orderDict['templateName'])[1] + '.pdf'
 
-    #print('| Working file\n| ', printPDFToSplit)
-    #for entry in orderDict:
-    #    print('|    ', orderDict[entry])
+    quantity_per_panel_dict = determine_panel_quantity(orderDict['quantity'], orderDict['repeat'])
 
     os.chdir(batchDir)
     for page in range(orderDict['repeatPanels']):
@@ -168,62 +188,30 @@ def cropMultiPanelPDFs(printPDFToSplit, batchDir):
                 continue
             else:
                 writer.addPage(printPDF.getPage(pageNum))
+
         newNamePt1 = orderDict['fileName'].split(orderDict['templateName'])[0]
         newNamePt2 = orderDict['fileName'].split(orderDict['templateName'])[1]
         panelNum = orderDict['templateName'] + ' Panel ' + str(pageNum + 1)
         newName = newNamePt1 + panelNum + newNamePt2 + '.pdf'
-        if newName in orderDict['PDFPanelsToCombine']:
+        
+        new_quantity_name_pt1 = newName.split('Qty ' + str(orderDict['quantity']))[0] + 'Qty '
+        new_quantity_name_pt2 = newName.split('Qty ' + str(orderDict['quantity']))[1]
+        adjusted_quantity = str(quantity_per_panel_dict[pageNum + 1])
+        final_name = new_quantity_name_pt1 + adjusted_quantity + new_quantity_name_pt2
+
+        if final_name in orderDict['PDFPanelsToCombine']:
             continue
         else:
-            orderDict['PDFPanelsToCombine'].append(newName)
+            orderDict['PDFPanelsToCombine'].append(final_name)
 
-        with open(newName, 'wb') as outputPDF:
+        with open(final_name, 'wb') as outputPDF:
             writer.write(outputPDF)
     
-    splitAndCombinedPDF = combineSplitPDFS(orderDict['PDFPanelsToCombine'], orderDict['CroppedPDFName'])
+    # splitAndCombinedPDF = combineSplitPDFS(orderDict['PDFPanelsToCombine'], orderDict['CroppedPDFName'])
 
     for PDF in orderDict['multiPagePDFs']:
         os.remove(PDF)
-    for PDF in orderDict['PDFPanelsToCombine']:
-        os.remove(PDF)
+    os.remove(printPDFToSplit)
 
-    print('| File has been split apart, cropped, and recombined.\n| File:', splitAndCombinedPDF.split('/')[-1])
-
-    if Path(gv.calderaDir + '# Past Orders/Original Files/').exists() == False:
-        os.mkdir(gv.calderaDir + '# Past Orders/Original Files')
-    
-    storageDir = gv.calderaDir + '# Past Orders/Original Files/'
-    
-    try:
-        shutil.move(printPDFToSplit, storageDir)
-    except shutil.Error:
-        shutil.copy(printPDFToSplit, storageDir)
-        os.remove(printPDFToSplit)
-
-def combineSplitPDFS(listOfPDFs, saveLocation):
-    masterPDF = PdfFileMerger()
-
-    templateName = getPdf.templateName(saveLocation)
-    nameWithoutSplit = saveLocation.split(templateName)[0] + templateName.split(' Split')[0] + saveLocation.split(templateName)[1]
-    saveLocation = nameWithoutSplit
-
-    for PDFToMerge in listOfPDFs:
-        masterPDF.append(PdfFileReader(PDFToMerge, 'rb'))
-    masterPDF.write(saveLocation)
-
-    return saveLocation
-
-# def decompress_pdf(temp_buffer):
-#     temp_buffer.seek(0)  # Make sure we're at the start of the file.
-
-#     process = subprocess.Popen(['pdftk.exe',
-#                                 '-',  # Read from stdin.
-#                                 'output',
-#                                 '-',  # Write to stdout.
-#                                 'uncompress'],
-#                                 stdin=temp_buffer,
-#                                 stdout=subprocess.PIPE,
-#                                 stderr=subprocess.PIPE)
-#     stdout, stderr = process.communicate()
-
-#     return StringIO(stdout)
+    for print_pdf in glob.glob(batchDir + '/*-Qty 0-*'):
+        os.remove(print_pdf)
