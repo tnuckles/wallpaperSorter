@@ -8,6 +8,7 @@ from datetime import  datetime
 import wallpaperSorterVariables as gv
 import getPdfData as getPdf
 import pdf_splitter
+import add_macos_tag as set_tag
 
 today = datetime.today()
 
@@ -289,6 +290,7 @@ def make_batch_folder(new_batch_dict, material):
     batch_number = str(gv.globalBatchCounter['batchCounter'])
     os.mkdir(batch_directory)
     gv.globalBatchCounter['batchCounter'] += 1
+    tag = 'Hotfolder'
     for print_pdf in new_batch_dict['list_of_pdfs']:
         pdf_friendly_name = getPdf.friendlyName
         if print_pdf.split('/')[-1] == 'LvD Color Chart Rotated.pdf':
@@ -311,3 +313,7 @@ def make_batch_folder(new_batch_dict, material):
             except utils.PdfReadError: 
                 print('| Couldn\'t split file. In case it\'s needed, a copy of the original file is in "#Past Orders/Original Files"')
                 print('| PDF:', getPdf.friendlyName(print_pdf))
+                tag = 'Manual'
+    set_tag.apply_tag(tag, batch_directory)
+    
+
