@@ -43,15 +43,15 @@ def getMaterialAndRollLength():
         print('\n| Not a valid choice.')
         return getMaterialAndRollLength()
     if command == 1:
-        confirm = confirmBatch('Smooth', 149)
+        confirm = confirmBatch('Smooth', 144)
         if confirm == True:
-            return 'Smooth', 149*12
+            return 'Smooth', 144*12
         else:
             return getMaterialAndRollLength()
     elif command == 2:
-        confirm = confirmBatch('Woven', 99)
+        confirm = confirmBatch('Woven', 94)
         if confirm == True:
-            return 'Woven', 99*12
+            return 'Woven', 94*12
         else:
             return getMaterialAndRollLength()
     elif command == 3:
