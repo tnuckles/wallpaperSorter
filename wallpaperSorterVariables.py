@@ -52,12 +52,12 @@ dirLookupDict = { #Dictionary for dynamically creating a directory path for sort
     1:'Odd Panels/',
     0:'Even Panels/',
     'MaterialLength':{ #this should reflect printable length. Smooth rolls are 150 feet, but we have 148 printable feet on each roll.
-        'Smooth' : (150 * 12) - 2,
-        'Woven' : (100 * 12) - 2,
-        'Traditional' : (100 * 12) - 2,
-        'Sm' : (150 * 12) - 2,
-        'Wv' : (100 * 12) - 2,
-        'Tr' : (100 * 12) - 2,
+        'Smooth' : (150 * 12) - 6,
+        'Woven' : (100 * 12) - 6,
+        'Traditional' : (100 * 12) - 6,
+        'Sm' : (150 * 12) - 6,
+        'Wv' : (100 * 12) - 6,
+        'Tr' : (100 * 12) - 6,
     },
 }
 
