@@ -316,4 +316,19 @@ def make_batch_folder(new_batch_dict, material):
                 tag = 'Manual'
     set_tag.apply_tag(tag, batch_directory)
     
+    divide_batch_into_full_and_sample(batch_directory)
+
+def divide_batch_into_full_and_sample(batch_directory):
+    full_pdfs = glob.glob(batch_directory + '/*-Full-*.pdf')
+    sample_pdfs = glob.glob(batch_directory + '/*-Samp-*.pdf')
+    os.mkdir(batch_directory + '/Full/')
+    os.mkdir(batch_directory + '/Samples/')
+    full_dir = batch_directory + '/Full/'
+    sample_dir = batch_directory + '/Samples/'
+    for print_pdf in full_pdfs:
+        shutil.move(print_pdf, full_dir)
+    for print_pdf in sample_pdfs:
+        shutil.move(print_pdf, sample_dir)
+
+     
 
