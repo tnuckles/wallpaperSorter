@@ -191,7 +191,7 @@ def cropMultiPanelPDFs(printPDFToSplit, batchDir):
 
         newNamePt1 = orderDict['fileName'].split(orderDict['templateName'])[0]
         newNamePt2 = orderDict['fileName'].split(orderDict['templateName'])[1]
-        panelNum = orderDict['templateName'] + ' Panel ' + str(pageNum + 1)
+        panelNum = orderDict['templateName'] + ' TQ' + str(orderDict['quantity']) + ' P' + str(pageNum + 1)
         newName = newNamePt1 + panelNum + newNamePt2 + '.pdf'
         
         new_quantity_name_pt1 = newName.split('Qty ' + str(orderDict['quantity']))[0] + 'Qty '
