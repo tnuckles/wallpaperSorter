@@ -38,8 +38,9 @@ def repeat(pdf):
         first_half = pdf.split(')-')[0]
         second_half = pdf.split(')-')[1]
         shipping = ')-Stnd-'
-        os.rename(pdf, first_half + shipping + second_half)
+        pdf = os.rename(pdf, first_half + shipping + second_half)
         return int(name(pdf).split('-')[8].split('Rp ')[1])
+        
 def quantity(pdf):
     return int(name(pdf).split('-')[9].split('Qty ')[1])
 
