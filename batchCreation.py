@@ -232,6 +232,7 @@ def build_batch_list(material_length, length_for_full, full_pdfs_to_batch, sampl
                             batch_length += length_to_add
                             find_odd = False
                             odd_match_height = 0
+                    
         loop_counter += 1
     
     length_for_samples = material_length - batch_length - 10

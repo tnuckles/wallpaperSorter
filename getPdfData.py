@@ -1,7 +1,7 @@
  #!usr/bin/env python
 # Series of functions that break apart the name of a PDF and return a specific value
 
-import math, datetime
+import math, datetime, os
 from datetime import datetime
 
 def name(pdf):
@@ -32,8 +32,14 @@ def size(pdf):
     return name(pdf).split('-')[7]
 
 def repeat(pdf):
-    return int(name(pdf).split('-')[8].split('Rp ')[1])
-
+    try:
+        return int(name(pdf).split('-')[8].split('Rp ')[1])
+    except IndexError:
+        first_half = pdf.split(')-')[0]
+        second_half = pdf.split(')-')[1]
+        shipping = ')-Stnd-'
+        os.rename(pdf, first_half + shipping + second_half)
+        return int(name(pdf).split('-')[8].split('Rp ')[1])
 def quantity(pdf):
     return int(name(pdf).split('-')[9].split('Qty ')[1])
 
