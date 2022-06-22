@@ -15,26 +15,33 @@ today = datetime.today()
 # Definitions
 
 def batchCreationController():
-    material, material_length = getMaterialAndRollLength()
+    material, material_length, care_about_length = getMaterialAndRollLength()
     full_pdfs_to_batch, samplePdfsToBatch = getListOfPdfs(material)
     sort_pdfs_by_length(full_pdfs_to_batch)
     total_full_length, total_sample_length = getTotalLengthOfPdfs(full_pdfs_to_batch, samplePdfsToBatch)
-    if (total_full_length + total_sample_length) > ((material_length * .8)):
+    if care_about_length == True:
+        if (total_full_length + total_sample_length) > ((material_length * .8)):
+            length_for_full = decide_full_sample_split(total_full_length, total_sample_length, material_length)
+            new_batch_dict = build_batch_list(material_length, length_for_full, full_pdfs_to_batch, samplePdfsToBatch, total_sample_length)
+            make_batch_folder(new_batch_dict, material)
+        else:
+            print('| Remaning PDFs will not fill more than 80' + "%" + ' of a roll. Waiting for new orders to make a batch.')
+    elif care_about_length == False:
         length_for_full = decide_full_sample_split(total_full_length, total_sample_length, material_length)
         new_batch_dict = build_batch_list(material_length, length_for_full, full_pdfs_to_batch, samplePdfsToBatch, total_sample_length)
         make_batch_folder(new_batch_dict, material)
-    else:
-        print('| Remaning PDFs will not fill more than 80' + "%" + ' of a roll. Waiting for new orders to make a batch.')
     
     return batchCreationController()
 
 def getMaterialAndRollLength():
-    options = 1,2,3,4
+    options = 1,2,3,4,5,6
     print('\n| Specify material and roll length:')
     print('| 1. Smooth, 150 Feet')
     print('| 2. Woven, 100 Feet')
     print('| 3. Smooth, Custom Length')
     print('| 4. Woven, Custom Length')
+    print('| 5. Smooth, 150 Feet, Disregard Length')
+    print('| 6. Woven, 100 Feet, Disregard Length')
     try:
         command = int(input('\n| Command > '))
     except ValueError:
@@ -45,13 +52,13 @@ def getMaterialAndRollLength():
     if command == 1:
         confirm = confirmBatch('Smooth', 144)
         if confirm == True:
-            return 'Smooth', 144*12
+            return 'Smooth', 144*12, True
         else:
             return getMaterialAndRollLength()
     elif command == 2:
         confirm = confirmBatch('Woven', 94)
         if confirm == True:
-            return 'Woven', 94*12
+            return 'Woven', 94*12, True
         else:
             return getMaterialAndRollLength()
     elif command == 3:
@@ -74,6 +81,18 @@ def getMaterialAndRollLength():
         confirm = confirmBatch('Woven', length)
         if confirm:
             return 'Woven', length
+        else:
+            return getMaterialAndRollLength()
+    elif command == 5:
+        confirm = confirmBatch('Smooth', 144)
+        if confirm == True:
+            return 'Smooth', 144*12, False
+        else:
+            return getMaterialAndRollLength()
+    elif command == 6:
+        confirm = confirmBatch('Woven', 94)
+        if confirm == True:
+            return 'Woven', 94*12, False
         else:
             return getMaterialAndRollLength()
 
