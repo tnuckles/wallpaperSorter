@@ -488,6 +488,7 @@ def splitMultiPagePDFs():
         except:
             print(f'| Couldn\'t check the number of pages on {file}')
             pass
+        NumOfPages = len(pdf.pages)
         if NumOfPages > 1:
                 print(f'| {file} has more than one page in its PDF. Splitting now.')
                 templateName = getPdf.templateName(file)
