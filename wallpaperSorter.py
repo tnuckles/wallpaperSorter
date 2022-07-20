@@ -59,7 +59,7 @@ def main():
                 os.mkdir(batch.gv.batchFoldersDir)
                 shutil.rmtree(gv.downloadDir)
                 shutil.copytree('/Users/Trevor/Desktop/Backup/Downloaded', gv.downloadDir)
-                shutil.rmtree(gv.sortingDir)
+                #shutil.rmtree(gv.sortingDir)
                 shutil.copytree('/Users/Trevor/Desktop/Backup/5 Sorted for Print', gv.sortingDir)
                 findJSONs()   
                 reportDuplicatePDFs()
@@ -791,6 +791,9 @@ def transferFilesFromDrive():
 
 
 
-startupChecks()
+try:
+    startupChecks()
+except:
+    pass
 main()
 ## End
