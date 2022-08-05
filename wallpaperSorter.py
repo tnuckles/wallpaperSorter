@@ -59,7 +59,7 @@ def main():
                 os.mkdir(batch.gv.batchFoldersDir)
                 shutil.rmtree(gv.downloadDir)
                 shutil.copytree('/Users/Trevor/Desktop/Backup/Downloaded', gv.downloadDir)
-                #shutil.rmtree(gv.sortingDir)
+                shutil.rmtree(gv.sortingDir)
                 shutil.copytree('/Users/Trevor/Desktop/Backup/5 Sorted for Print', gv.sortingDir)
                 findJSONs()   
                 reportDuplicatePDFs()
@@ -486,11 +486,11 @@ def splitMultiPagePDFs():
             pdf = pikepdf.Pdf.open(file)
             NumOfPages = len(pdf.pages)
         except:
-            print(f'| Couldn\'t check the number of pages on {file}')
+            print(f'\n| Couldn\'t check the number of pages on {file}')
             pass
         NumOfPages = len(pdf.pages)
         if NumOfPages > 1:
-                print(f'| {file} has more than one page in its PDF. Splitting now.')
+                print(f'\n| {file} has more than one page in its PDF. Splitting now.')
                 templateName = getPdf.templateName(file)
                 namePt1 = file.split('Qty ')[0] + 'Qty '
                 namePt2 = file.split(templateName)[1]
@@ -502,9 +502,9 @@ def splitMultiPagePDFs():
                     dst.save(namePt1 + str(quantity) + '-' + templateName + ' Panel ' + str(n + 1) + namePt2)
                 try:
                     os.remove(file)
-                    print(f'| Finished splitting {file}')
+                    print(f'\n| Finished splitting {file}')
                 except:
-                    print(f'| Split the pages of {file},\nbut couldn\'t remove the original.')
+                    print(f'\n| Split the pages of {file},\nbut couldn\'t remove the original.')
 
 def sortPDFsByDetails():
     print('\n| Starting Sort Process. This may take a long time.')
@@ -711,9 +711,12 @@ def transferFilesFromDrive():
                     height = orderHeight.split('H')[1]
                     orderLength = str((math.ceil(int(quantity)/2)*float(height) + ((math.floor(int(quantity)/2) * .5) + ((int(quantity) % 2) * .5))))
                 except IndexError:
-                    print('| Couldn\'t handle', file.split('/')[-1])
-                    print('| Sorry about that.')
-                    continue
+                    try:
+                        shutil.move(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]+ orderRepeat + orderQuantity)
+                    except:
+                        print('| Couldn\'t handle', file.split('/')[-1])
+                        print('| Sorry about that.')
+                        continue
             newPDFName = orderNumber + '-' + orderItem + '-(' + str(date.today()) + ')-Prty-' + material + '-' + orderSize + '-' + orderRepeat + '-' + orderQuantity + '-' + templateName + '-L' + orderLength + '-' + orderWidth + '-' + orderHeight + '.pdf'
             try:
                 os.rename(gv.driveLocation + '/' + file, gv.driveLocation + '/' + newPDFName)
@@ -786,6 +789,7 @@ def transferFilesFromDrive():
                         except OSError as err:
                             print(err)
     print('\n| Finished transferring files from Google Drive.')
+    moveForDueDates()
     return main()
 
 
