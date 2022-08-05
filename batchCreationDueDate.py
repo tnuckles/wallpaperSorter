@@ -12,6 +12,64 @@ import add_macos_tag as set_tag
 
 today = datetime.today()
 
+### Psuedo Code
+'''
+Get current count of all PDFs in Sorted For Print
+Display current count
+Display menu of possible options:
+    Smooth, 150 Feet
+    Woven, 100 Feet
+    Smooth, 150 Feet, Disregard minimum length
+    Woven, 100 Feet, Disregard minimum batch length
+    Smooth, Custom Length
+    Woven, Custom Length
+Start batch based on selected method:
+    Look at each due date individually:
+        Get total length of all full panels items IF they were batched together nicely to optimize space
+            If total length > roll length, optimized batch based on that space, then start over.
+            Otherwise: Batch all available Items
+            Recalculate leftover Length
+        Repeat for OT samples
+            
+'''
+
+### New Variables
+
+
+
+
+### New Definitions
+
+def getCountOfPrintPdfs(material, fullOrSamp):
+    material = gv.dirLookupDict[material]
+    if fullOrSamp == 'full':
+        fullOrSamp = 'Full/**/*.pdf'
+    else:
+        fullOrSamp = 'Sample/*.pdf'
+    pdfCount = {
+        'OT': len(glob.glob(gv.sortingDir + '1 - OT Orders/' + material + fullOrSamp, recursive=True)),
+        'late': len(glob.glob(gv.sortingDir + '2 - Late/' + material + fullOrSamp, recursive=True)),
+        'today': len(glob.glob(gv.sortingDir + '3 - Today/' + material + fullOrSamp, recursive=True)),
+        'future': len(glob.glob(gv.sortingDir + '4 - Future/' + material + fullOrSamp, recursive=True)),
+    }
+    return pdfCount
+
+printPdfCounts = {
+    'smooth': {
+        'full' : (getCountOfPrintPdfs('Smooth', 'full')),
+        'sample' : (getCountOfPrintPdfs('Smooth', 'sample')),
+    }, 
+    'woven': {
+        'full' : (getCountOfPrintPdfs('Woven', 'full')),
+        'sample' : (getCountOfPrintPdfs('Woven', 'sample')),
+    },  
+
+}
+for paperType in printPdfCounts:
+    print(print)
+    for orderSize in printPdfCounts[paperType]:
+        print(printPdfCounts[paperType].keys, printPdfCounts[paperType][orderSize])
+
 # Definitions
 
 def batchCreationController():
