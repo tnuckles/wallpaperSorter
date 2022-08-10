@@ -7,6 +7,7 @@ from datetime import date, timedelta, datetime
 
 import wallpaperSorterVariables as gv
 import batchCreation as batch
+import batchCreationDueDate as batchCDD
 import getPdfData as getPdf
 
 today = date.today()
@@ -32,8 +33,6 @@ def main():
         findJSONs()
         reportDuplicatePDFs()
         splitMultiPagePDFs()
-        # if os.path.expanduser('~').split('/')[-1] == 'Trevor':
-        #     checkRepeatSize()
         sortPDFsByDetails()
         buildDBSadNoises()
         return main()
@@ -41,7 +40,10 @@ def main():
         transferFilesFromDrive()
         return main()
     elif command == 3:
-        batch.batchCreationController()
+        if os.path.expanduser('~').split('/')[-1] == 'Trevor':
+            batchCDD.batchCreationController()
+        else:
+            batch.batchCreationController()
         return main()
     elif command == 4:
         moveForDueDates()
@@ -695,29 +697,30 @@ def transferFilesFromDrive():
                 continue
             else:
                 try:
-                    orderNumber = file.split('(')[0]
-                    orderItem = file.split('(')[1].split(')')[0]
-                    templateName = file.split('-')[1]
-                    material = file.split('-')[2]
-                    orderSize = file.split('-')[3]
-                    orderRepeat = file.split('-')[4]
-                    orderQuantity = file.split('-')[5]
-                    quantity = orderQuantity.split('Qty ')[1]
-                    orderWidth = file.split('-')[6]
-                    orderHeight = file.split('-')[7].split('.pdf')[0]
-                    if orderSize == 'Samp':
-                        orderWidth = 'W25'
-                        orderHeight = 'H9'
-                    height = orderHeight.split('H')[1]
-                    orderLength = str((math.ceil(int(quantity)/2)*float(height) + ((math.floor(int(quantity)/2) * .5) + ((int(quantity) % 2) * .5))))
+                    pdfDict = {
+                        'orderNumber': file.split('(')[0],
+                        'orderItem': file.split('(')[1].split(')')[0],
+                        'templateName': file.split('-')[1],
+                        'material': file.split('-')[2],
+                        'orderSize': file.split('-')[3],
+                        'orderRepeat': file.split('-')[4],
+                        'orderQuantity': file.split('-')[5].split('Qty ')[1],
+                        'orderWidth': file.split('-')[6],
+                        'orderHeight': file.split('-')[7].split('.pdf')[0],
+                    }
+                    pdfDict['orderLength'] = str((math.ceil(int(pdfDict['quantity'])/2)*float(pdfDict['height']) + ((math.floor(int(pdfDict['quantity'])/2) * .5) + ((int(pdfDict['quantity']) % 2) * .5))))
+
+                    if pdfDict['orderSize'] == 'Samp':
+                        pdfDict['orderWidth'] = 'W25'
+                        pdfDict['orderHeight'] = 'H9'
                 except IndexError:
                     try:
-                        shutil.move(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]+ orderRepeat + orderQuantity)
+                        pdfDict = getPdf.getAll(file)
                     except:
                         print('| Couldn\'t handle', file.split('/')[-1])
                         print('| Sorry about that.')
                         continue
-            newPDFName = orderNumber + '-' + orderItem + '-(' + str(date.today()) + ')-Prty-' + material + '-' + orderSize + '-' + orderRepeat + '-' + orderQuantity + '-' + templateName + '-L' + orderLength + '-' + orderWidth + '-' + orderHeight + '.pdf'
+            newPDFName = pdfDict['orderNumber'] + '-' + pdfDict['orderItem'] + '-(' + str(date.today()) + ')-Prty-' + pdfDict['material'] + '-' + pdfDict['orderSize'] + '-Rp ' + str(pdfDict['orderRepeat']) + '-Qty ' + str(pdfDict['orderQuantity']) + '-' + pdfDict['templateName'] + '-L' + str(pdfDict['orderLength']) + '-W' + str(pdfDict['orderWidth']) + '-H' + str(pdfDict['orderHeight']) + '.pdf'
             try:
                 os.rename(gv.driveLocation + '/' + file, gv.driveLocation + '/' + newPDFName)
             except:
@@ -736,25 +739,25 @@ def transferFilesFromDrive():
             elif file.endswith('.pdf') != True:
                 continue
             else:
-                orderRepeat = file.split('-')[8]
-                orderQuantity = int(file.split('-')[9].split('Qty ')[1])
-                if orderRepeat == 'Rp 2':
-                    orderRepeat = 'Repeat 2/'
+                pdfDict['orderRepeat'] = file.split('-')[8]
+                pdfDict['orderQuantity'] = int(file.split('-')[9].split('Qty ')[1])
+                if pdfDict['orderRepeat'] == 'Rp 2':
+                    pdfDict['orderRepeat'] = 'Repeat 2/'
                 else:
-                    orderRepeat = 'Repeat Non-2/'
-                if orderQuantity % 2 == 0:
-                    orderQuantity = 'Even Panels/'
+                    pdfDict['orderRepeat'] = 'Repeat Non-2/'
+                if pdfDict['orderQuantity'] % 2 == 0:
+                    pdfDict['orderQuantity'] = 'Even Panels/'
                 else:
-                    orderQuantity = 'Odd Panels/'
+                    pdfDict['orderQuantity'] = 'Odd Panels/'
                 print('| Moving file: ', file)
                 print('| Source: ', gv.driveLocation)
-                if orderSize == 'Full':
+                if pdfDict['orderSize'] == 'Full':
                     try:
-                        shutil.move(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]+ orderRepeat + orderQuantity)
+                        shutil.move(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[pdfDict['material']] + gv.dirLookupDict[pdfDict['orderSize']]+ pdfDict['orderRepeat'] + pdfDict['orderQuantity'])
                         time.sleep(2)
                         print('| Successfully transferred! File:', file)
                     except shutil.Error:
-                        shutil.copy(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]+ orderRepeat + orderQuantity)
+                        shutil.copy(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[pdfDict['material']] + gv.dirLookupDict[pdfDict['orderSize']]+ pdfDict['orderRepeat'] + pdfDict['orderQuantity'])
                         try:
                             os.remove(gv.driveLocation + '/' + file)
                             time.sleep(2)
@@ -763,13 +766,13 @@ def transferFilesFromDrive():
                             print('|> Could not move ' + file)
                     except OSError as err:
                         print(err)    
-                elif orderSize == 'Samp':
+                elif pdfDict['orderSize'] == 'Samp':
                     try:
-                        shutil.move(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize])
+                        shutil.move(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[pdfDict['material']] + gv.dirLookupDict[pdfDict['orderSize']])
                         time.sleep(2)
                         print('| Successfully transferred! File:', file)
                     except shutil.Error:
-                        shutil.copy(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize])
+                        shutil.copy(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[pdfDict['material']] + gv.dirLookupDict[pdfDict['orderSize']])
                         try:
                             os.remove(gv.driveLocation + '/' + file)
                             time.sleep(2)
@@ -779,7 +782,7 @@ def transferFilesFromDrive():
                         except OSError as err:
                             print(err)
                     except PermissionError:
-                        shutil.copy(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize])
+                        shutil.copy(gv.driveLocation + '/' + file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[pdfDict['material']] + gv.dirLookupDict[pdfDict['orderSize']])
                         try:
                             os.remove(gv.driveLocation + '/' + file)
                             time.sleep(2)

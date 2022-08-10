@@ -69,3 +69,19 @@ def calculate_length(quantity, height):
     length = second * third
     return length
 
+def getAll(pdf):
+    pdfDict = {
+        'orderNumber': orderNumber(pdf),
+        'orderItem': orderItem(pdf),
+        'dueDate': dueDate(pdf),
+        'shipMethod': shipMethod(pdf),
+        'material': material(pdf),
+        'orderSize': size(pdf),
+        'orderRepeat': repeat(pdf),
+        'orderQuantity': quantity(pdf),
+        'templateName': templateName(pdf),
+        'orderLength': length(pdf),
+        'orderWidth': width(pdf),
+        'orderHeight': height(pdf),
+    }
+    return pdfDict
