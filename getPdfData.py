@@ -59,7 +59,7 @@ def width(pdf):
 def height(pdf):
     return float(name(pdf).split('-')[13].split('H')[1])
 
-def calculate_length(quantity, height):
+def calculateLength(quantity, height):
     quantity = int(quantity)
     height = float(height)
 

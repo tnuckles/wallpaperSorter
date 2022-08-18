@@ -278,7 +278,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
                 if height == '148.25':
                     height = '146.25'
                 orderSize = 'Full'
-                length = str(getPdf.calculate_length(quantity, height))
+                length = str(getPdf.calculateLength(quantity, height))
                 # See Length Notes at the end of the function for an explanation.
             newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
             renamePDF(originalPDFName, newPDFName)
@@ -340,7 +340,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
             if height == '148.25':
                 height = '146.25'
             orderSize = 'Full'
-            length = str(getPdf.calculate_length(quantity, height))
+            length = str(getPdf.calculateLength(quantity, height))
 
         newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
         renamePDF(originalPDFName, newPDFName)
@@ -412,7 +412,7 @@ def parseJsonLoop(JSON, JSONitem, orderNumber, itemNum, orderDueDate, shipVia):
         if height == '148.25':
             height = '146.25'
         orderSize = 'Full'
-        length = str((math.ceil(int(quantity)/2)*float(height) + ((math.floor(int(quantity)/2) * .5) + ((int(quantity) % 2) * .5))))
+        length = getPdf.calculateLength(quantity, height)
         # See Length Notes at the end of the function for an explanation.
     newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
     renamePDF(originalPDFName, newPDFName)
@@ -452,6 +452,8 @@ def parseJsonLoop(JSON, JSONitem, orderNumber, itemNum, orderDueDate, shipVia):
                 'File Path': gv.sortingDir + '2 - Late/' + gv.dirLookupDict[paperType] + gv.dirLookupDi[orderSize] + gv.dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + gv.dirLookupDict[int(quantity) % 2] + newPDFName,
             }
         }
+    
+    str((math.ceil(int(quantity)/2)*float(height) + ((math.floor(int(quantity)/2) * .5) + ((int(quantity) % 2) * .5))))
 
 def renamePDF(old, new):
     extension = old.split(".")[-1]
@@ -683,7 +685,6 @@ def removeOldOrders(folderToClean, days): #removes folders and contents older th
             except ValueError:
                 continue
 
-
 def transferFilesFromDrive():
     # Old name convention: 300014719(1)-Watercolor Herringbone-Wv-Samp-Rp 4-Qty 1-W9-H25
     # New name convention: 300013884-1-(2022-02-02)-Stnd-Wv-Samp-Rp 2-Qty 1-Watercolor Herringbone-L9.5-W25-H9
@@ -794,9 +795,6 @@ def transferFilesFromDrive():
     print('\n| Finished transferring files from Google Drive.')
     moveForDueDates()
     return main()
-
-
-
 
 try:
     startupChecks()

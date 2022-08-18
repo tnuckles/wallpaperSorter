@@ -53,7 +53,7 @@ def getPdfGlob(dueDate, material, fullOrSamp):
         'Future':'4 - Future/',
     }
     material = gv.dirLookupDict[material]
-    if fullOrSamp == 'full':
+    if fullOrSamp.lower() == 'full':
         fullOrSamp = 'Full/**/*.pdf'
     else:
         fullOrSamp = 'Sample/*.pdf'
@@ -391,8 +391,6 @@ def confirmBatch(material, length):
 #         return True
 #     elif command == 2:
 #         return False
-
-
 
 def sortPdfsByLength(pdf_array):
     for due_date in pdf_array:
