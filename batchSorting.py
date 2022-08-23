@@ -1,9 +1,14 @@
 #!usr/bin/env python
 
 import getPdfData as getPdf
+from math import floor
 
-def sortAndCalculateFullLength(globOfPdfs): # Takes a list of paths to pdfs, calls sortPdfsByLength to srot them by length, then calculates their full length.
-    sortedList = sortPdfs(globOfPdfs)
+def calculateSample(globOfPdfs):
+    count = len(globOfPdfs)
+    return ((floor(count / 2) + (count % 2)) * 9.5)
+
+def calculateFull(globOfPdfs): # Takes a list of paths to pdfs, calls sortPdfsByLength to srot them by length, then calculates their full length.
+    sortedList = globOfPdfs
     totalPdfsLength = 0
     findOdd = False
     oddMatchHeight = 0

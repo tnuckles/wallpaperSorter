@@ -21,6 +21,20 @@ def confirmBatchMenu(material, length): # Menu to Confirm Batch Details. Calls b
     else:
         return
 
+def includeOTs():
+    menuOptions = (
+        (1, 'Yes'),
+        (2, 'No'),
+    )
+    validOptions = populateValidOptions(menuOptions)
+    print('\n| Include Order Troubles?')
+    printMenuOptions(menuOptions)
+    command = menuOptions[(getInput(validOptions)-1)]
+    if command == menuOptions[0]:
+        return True
+    else:
+        return False
+
 def populateValidOptions(menuOptions): # Gathers valid options from menus (like batchDetailsMenu) and ensures they are valid
     validOptions = []
     for option in menuOptions:
@@ -85,7 +99,7 @@ def batchDetailsMenu(): # Menu to get the main details of a new batch. Returns a
     batchDetails = {
         'material':command[2],
         'materialLength':command[3] * 12,
-        'minimumLength':command[4]
+        'minLength':command[4]
     }
     if batchDetails['materialLength'] == 0:
         batchDetails['materialLength'] = getBatchLength(batchDetails['material'])

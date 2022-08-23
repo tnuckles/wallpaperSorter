@@ -7,7 +7,7 @@ from datetime import date, timedelta, datetime
 
 import wallpaperSorterVariables as gv
 import batchCreation as batch
-import batchCreationDueDate as batchCDD
+import batchController as batchCtrl 
 import getPdfData as getPdf
 
 today = date.today()
@@ -41,7 +41,7 @@ def main():
         return main()
     elif command == 3:
         if os.path.expanduser('~').split('/')[-1] == 'Trevor':
-            batchCDD.batchCreationController()
+            batchCtrl.buildABatch()
         else:
             batch.batchCreationController()
         return main()
