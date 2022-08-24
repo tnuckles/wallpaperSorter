@@ -142,15 +142,8 @@ def buildABatch(): # Begins the batch building process
         checkminLength(material, minBatchLength)
     
     # Begin batch creation
-    #createBatch(material, includeOTs, currentBatchDict, availablePdfs)
     createBatch(currentBatchDict, availablePdfs)
     createBatchFolderAndMovePdfs(currentBatchDict)
-    # currentBatchDict['Late'] = createBatch(currentBatchDict['batchDetails'], currentBatchDict['Late'], availablePdfs['Late'])
-    print(currentBatchDict['Late']['full']['batchLength'])
-    print(calculateFull(currentBatchDict['Late']['full']['batchList']))
-    print(currentBatchDict['batchDetails']['length'])
-    for printPdf in currentBatchDict['Late']['full']['batchList']:
-        print(getPdf.friendlyName(printPdf))
 
     # Resets dicts and returns to batching menu
     return resetDicts()
