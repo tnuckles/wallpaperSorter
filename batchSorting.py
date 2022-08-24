@@ -84,7 +84,6 @@ def sortPdfsByHeight(pdfDict):# takes a dict of lists of pathstopdfs and sorts t
     return pdfDict
 
 def sortPdfsByLength(pdfDict): # takes a list of pathstopdfs and sorts them by length, from greatest to least.
-    # Original sort code is at the bottom.
     listToSort = []
     sortedList = []
     for oddList in pdfDict:
@@ -100,6 +99,22 @@ def sortPdfsByLength(pdfDict): # takes a list of pathstopdfs and sorts them by l
             pdfDict[oddList][heightList] = sortedList
             sortedList = []
     return pdfDict
+
+def sortPdfsByOrderNumber(pdfList): # takes a list of pathstopdfs and sorts them by orderNumber, from least to greatest.
+    # Original sort code is at the bottom.
+    listToSort = []
+    sortedList = []
+    for printPdf in pdfList:
+        pdfOrderNumber = getPdf.orderNumber(printPdf)
+        listToSort.append((pdfOrderNumber, printPdf))
+    listToSort.sort(reverse=False, key=lambda pdf: pdf[0])
+    pdfList = listToSort
+    listToSort = []
+    for printPdf in pdfList:
+        sortedList.append(printPdf[1])
+    pdfList = sortedList
+    sortedList = []
+    return pdfList
         
 def combineMultiplePdfLists(pdfDict):
     sortedList = []

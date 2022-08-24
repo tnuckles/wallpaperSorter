@@ -2,7 +2,7 @@
 
 from batchCreate import getPdfGlob
 import batchMenu as bMenu
-from batchSorting import calculateFull, calculateSample, sortPdfs
+from batchSorting import calculateFull, calculateSample, sortPdfs, sortPdfsByOrderNumber
 from batchCreate import createBatch, createBatchFolderAndMovePdfs
 import getPdfData as getPdf
 
@@ -208,23 +208,23 @@ def fillAvailablePdfsDict(material, includeOTs):
         # gets a length for the sorted list of OT Full Pdfs
         availablePdfs['OT']['full']['batchLength'] = calculateFull(availablePdfs['OT']['full']['batchList'])
         # gets a list of OT Sample Pdfs
-        availablePdfs['OT']['sample']['batchList'] = getPdfGlob('OT', material, 'sample')
+        availablePdfs['OT']['sample']['batchList'] = sortPdfsByOrderNumber(getPdfGlob('OT', material, 'sample'))
         # gets a length of OT Sample Pdfs
         availablePdfs['OT']['sample']['batchLength'] = calculateSample(availablePdfs['OT']['sample']['batchList'])
     '''Late Pdfs'''
     availablePdfs['Late']['full']['batchList'] = sortPdfs(getPdfGlob('Late', material, 'full'))
     availablePdfs['Late']['full']['batchLength'] = calculateFull(availablePdfs['Late']['full']['batchList'])
-    availablePdfs['Late']['sample']['batchList'] = getPdfGlob('Late', material, 'sample')
+    availablePdfs['Late']['sample']['batchList'] = sortPdfsByOrderNumber(getPdfGlob('Late', material, 'sample'))
     availablePdfs['Late']['sample']['batchLength'] = calculateSample(availablePdfs['Late']['sample']['batchList'])
     '''Today Pdfs'''
     availablePdfs['Today']['full']['batchList'] = sortPdfs(getPdfGlob('Today', material, 'full'))
     availablePdfs['Today']['full']['batchLength'] = calculateFull(availablePdfs['Today']['full']['batchList'])
-    availablePdfs['Today']['sample']['batchList'] = getPdfGlob('Today', material, 'sample')
+    availablePdfs['Today']['sample']['batchList'] = sortPdfsByOrderNumber(getPdfGlob('Today', material, 'sample'))
     availablePdfs['Today']['sample']['batchLength'] = calculateSample(availablePdfs['Today']['sample']['batchList'])
     '''Future Pdfs'''
     availablePdfs['Future']['full']['batchList'] = sortPdfs(getPdfGlob('Future', material, 'full'))
     availablePdfs['Future']['full']['batchLength'] = calculateFull(availablePdfs['Future']['full']['batchList'])
-    availablePdfs['Future']['sample']['batchList'] = getPdfGlob('Future', material, 'sample')
+    availablePdfs['Future']['sample']['batchList'] = sortPdfsByOrderNumber(getPdfGlob('Future', material, 'sample'))
     availablePdfs['Future']['sample']['batchLength'] = calculateSample(availablePdfs['Future']['sample']['batchList'])
 
 def resetDicts():
