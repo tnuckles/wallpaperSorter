@@ -1,6 +1,7 @@
 #!usr/bin/env python
 
 import zipfile as zf
+from batchCreate import tryToMovePDF
 import getPdfData as getPdf
 import batchCreation as batch
 import batchController as batchCtrl 
@@ -283,6 +284,8 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
                 # See Length Notes at the end of the function for an explanation.
             newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
             renamePDF(originalPDFName, newPDFName)
+            if orderTroubleNotes != '':
+                applyTag('order trouble', gv.downloadDir + newPDFName + '.pdf')
             keepTrackOfPDF(orderNumber, originalPDFName) 
             count += 1
             if orderNumber in gv.orderItemsDict:
@@ -345,6 +348,8 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
 
         newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
         renamePDF(originalPDFName, newPDFName)
+        if orderTroubleNotes != '':
+                applyTag('order trouble', gv.downloadDir + newPDFName + '.pdf')
         keepTrackOfPDF(orderNumber, originalPDFName) 
         count += 1
         if orderNumber in gv.orderItemsDict:
@@ -513,98 +518,25 @@ def splitMultiPagePDFs():
 
 def sortPDFsByDetails():
     print('\n| Starting Sort Process. This may take a long time.')
-    for file in glob.iglob(gv.downloadDir + '*.pdf'):
-        dueDate = getPdf.dueDate(file)
-        material = getPdf.material(file)
-        orderSize = getPdf.size(file)
-        repeat = getPdf.repeat(file)
-        oddOrEven = getPdf.oddOrEven(file)
-        orderLength = getPdf.length(file)
-        # Checks if order is over the maximum length of a roll and moves it to Needs Attention
-        if material == 'Wv':
-            if orderLength >= gv.dirLookupDict['MaterialLength']['Woven']:
-                try:
-                    shutil.copy(file, gv.needsAttention)
-                    try:
-                        os.remove(file)
-                        continue
-                    except:
-                        print('|> Could not remove ', file)
-                except OSError as err:
-                            print(err)
-        elif material == 'Sm':
-            if orderLength >= gv.dirLookupDict['MaterialLength']['Smooth']:
-                try:
-                    shutil.copy(file, gv.needsAttention)
-                    try:
-                        os.remove(file)
-                        continue
-                    except:
-                        print('|> Could not remove ', file)
-                except OSError as err:
-                    print(err)
-        # Sorts based on normal parameters.            
-        if orderSize == 'Samp':
-            if dueDate < date.today():
-                try:
-                    shutil.copy(file, gv.sortingDir + '2 - Late/' + gv.dirLookupDict[material] +gv.dirLookupDict[orderSize])
-                    try:
-                        os.remove(file)
-                    except:
-                        print('|> Could not remove ', file)
-                except OSError as err:
-                    print(err)
-            elif dueDate > date.today():
-                try:
-                    shutil.copy(file, gv.sortingDir + '4 - Future/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize])
-                    try:
-                        os.remove(file)
-                    except:
-                        print('|> Could not remove ', file)
-                except OSError as err:
-                    print(err)
-            else:
-                try:
-                    shutil.copy(file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize])
-                    try:
-                        os.remove(file)
-                    except:
-                        print('|> Could not remove ', file)
-                except OSError as err:
-                    print(err)
+    for printPdf in glob.iglob(gv.downloadDir + '*.pdf'):
+        dueDate = getPdf.dueDate(printPdf)
+        material = getPdf.material(printPdf)
+        orderSize = getPdf.size(printPdf)
+        repeat = getPdf.repeat(printPdf)
+        oddOrEven = getPdf.oddOrEven(printPdf)
+        orderLength = getPdf.length(printPdf)
+        if orderLength >= gv.dirLookupDict['MaterialLength'][gv.substrate[material]]:
+            tryToMovePDF(printPdf, gv.needsAttention, getPdf.friendlyName(printPdf))
+        elif orderSize == 'Full':
+            pathToMove = gv.sortingDir + dueDateLookup(dueDate) + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven]
         else:
-            if dueDate < date.today():
-                try:
-                    shutil.copy(file, gv.sortingDir + '2 - Late/' + gv.dirLookupDict[material] +gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven])
-                    try:
-                        os.remove(file)
-                    except:
-                        print('|> Could not remove ', file)
-                except OSError as err:
-                    print(err)
-            elif dueDate > date.today():
-                try:
-                    shutil.copy(file, gv.sortingDir + '4 - Future/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven])
-                    try:
-                        os.remove(file)
-                    except:
-                        print('|> Could not remove ', file)
-                except OSError as err:
-                    print(err)
-            else:
-                try:
-                    shutil.copy(file, gv.sortingDir + '3 - Today/' + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven])
-                    try:
-                        os.remove(file)
-                    except:
-                        print('|> Could not remove ', file)
-                except OSError as err:
-                    print(err)
+            pathToMove = gv.sortingDir + dueDateLookup(dueDate) + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
+        
+        tryToMovePDF(printPdf, pathToMove, getPdf.friendlyName(printPdf))
     
     print('| Finished sorting files.')
-    gv.needsAttentionDir = len(glob.glob(gv.needsAttention + '*.pdf'))
-    if gv.needsAttentionDir > 0:
-        print(f'\n| ****\n| 4 Needs Attention has {gv.needsAttentionDir} file(s) that need attention.\n| ****\n')
+    if len(glob.glob(gv.needsAttention + '*.pdf')) > 0:
+        print(f'\n| ****\n| 4 Needs Attention has', len(glob.glob(gv.needsAttention + '*.pdf')), 'file(s) that need attention.\n| ****\n')
 
 def buildDBSadNoises():
     print('| Building DB. Please hold.')
@@ -670,6 +602,14 @@ def buildDBSadNoises():
                 }
             }
     print('| DB Built.')
+
+def dueDateLookup(dueDate):
+    if dueDate < date.today():
+        return '2 - Late/'
+    elif dueDate > date.today():
+        return '4 - Future/'
+    else:
+        return '3 - Today/'
 
 def removeOldOrders(folderToClean, days): #removes folders and contents older than X days
     olderThanDays = days
