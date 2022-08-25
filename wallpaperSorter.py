@@ -153,7 +153,7 @@ def moveForDueDates():
             orderDueDate = '4 - Future/'
         else:
             orderDueDate = '3 - Today/'
-         # Checks if order is over the maximum length of a roll and moves it to Needs Attention
+        # Checks if order is over the maximum length of a roll and moves it to Needs Attention
         if material == 'Wv':
             if orderLength >= gv.dirLookupDict['MaterialLength']['Woven']:
                 try:
