@@ -1,14 +1,15 @@
 #!usr/bin/env python
 
-import os, shutil, math, datetime, time, json, glob, pikepdf
 import zipfile as zf
-from pathlib import Path
-from datetime import date, timedelta, datetime
-
-import wallpaperSorterVariables as gv
+import getPdfData as getPdf
 import batchCreation as batch
 import batchController as batchCtrl 
-import getPdfData as getPdf
+import wallpaperSorterVariables as gv
+import os, shutil, math, datetime, time, json, glob, pikepdf
+
+from pathlib import Path
+from datetime import date, timedelta, datetime
+from add_macos_tag import apply_tag as applyTag
 
 today = date.today()
 ### Definitions
@@ -432,7 +433,7 @@ def parseJsonLoop(JSON, JSONitem, orderNumber, itemNum, orderDueDate, shipVia):
             'Width': width,
             'Height': height,
             'OT Notes': orderTroubleNotes,
-            'File Path': gv.sortingDir + '2 - Late/' + gv.dirLookupDict[paperType] + gv.dirLookupDi[orderSize] + gv.dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + gv.dirLookupDict[int(quantity) % 2] + newPDFName,
+            'File Path': gv.sortingDir + '2 - Late/' + gv.dirLookupDict[paperType] + gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + gv.dirLookupDict[int(quantity) % 2] + newPDFName,
         }
     else:
         gv.orderItemsDict[orderNumber] = {
@@ -449,7 +450,7 @@ def parseJsonLoop(JSON, JSONitem, orderNumber, itemNum, orderDueDate, shipVia):
                 'Width': width,
                 'Height': height,
                 'OT Notes': orderTroubleNotes,
-                'File Path': gv.sortingDir + '2 - Late/' + gv.dirLookupDict[paperType] + gv.dirLookupDi[orderSize] + gv.dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + gv.dirLookupDict[int(quantity) % 2] + newPDFName,
+                'File Path': gv.sortingDir + '2 - Late/' + gv.dirLookupDict[paperType] + gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + gv.dirLookupDict[int(quantity) % 2] + newPDFName,
             }
         }
     
