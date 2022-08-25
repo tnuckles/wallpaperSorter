@@ -11,6 +11,7 @@ import os, shutil, math, datetime, time, json, glob, pikepdf
 from pathlib import Path
 from datetime import date, timedelta, datetime
 from add_macos_tag import apply_tag as applyTag
+from macos_tags import get_all as checkTags
 
 today = date.today()
 ### Definitions
@@ -519,7 +520,9 @@ def splitMultiPagePDFs():
 def sortPDFsByDetails():
     print('\n| Starting Sort Process. This may take a long time.')
     for printPdf in glob.iglob(gv.downloadDir + '*.pdf'):
-        dueDate = getPdf.dueDate(printPdf)
+        dueDate = dueDateLookup(getPdf.dueDate(printPdf))
+        if 'order trouble' in str(checkTags(printPdf)):
+            dueDate = '1 - OT/'
         material = getPdf.material(printPdf)
         orderSize = getPdf.size(printPdf)
         repeat = getPdf.repeat(printPdf)
@@ -528,9 +531,9 @@ def sortPDFsByDetails():
         if orderLength >= gv.dirLookupDict['MaterialLength'][gv.substrate[material]]:
             tryToMovePDF(printPdf, gv.needsAttention, getPdf.friendlyName(printPdf))
         elif orderSize == 'Full':
-            pathToMove = gv.sortingDir + dueDateLookup(dueDate) + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven]
+            pathToMove = gv.sortingDir + dueDate + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven]
         else:
-            pathToMove = gv.sortingDir + dueDateLookup(dueDate) + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
+            pathToMove = gv.sortingDir + dueDate + gv.dirLookupDict[material] + gv.dirLookupDict[orderSize]
         
         tryToMovePDF(printPdf, pathToMove, getPdf.friendlyName(printPdf))
     
