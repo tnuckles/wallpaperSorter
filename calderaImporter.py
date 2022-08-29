@@ -46,13 +46,21 @@ def batchSelector(listOfBatches):
     print('\n| Which batch would you like to import into caldera?')
     command = int(input('| Command > '))
     if command <= otListStop:
-        print('\n| Selected', otBatchList[command-1], 'for print.')
+        command -= 1
+        batch = otBatchList[command]
+        print('\n| Selected', batch.split('/')[-1], 'for print.')
     elif otListStop < command <= lateListStop:
-        print('late')
+        command -= (1 + otListStop)
+        batch = lateBatchList[command]
+        print('\n| Selected', batch.split('/')[-1], 'for print.')
     elif lateListStop < command <= todayListStop:
-        print('today')
+        command -= (1 + lateListStop)
+        batch = todayBatchList[command]
+        print('\n| Selected', batch.split('/')[-1], 'for print.')
     elif todayListStop < command <= futureListStop:
-        print('future')
+        command -= (1 + todayListStop)
+        batch = futureBatchList[command]
+        print('\n| Selected', batch.split('/')[-1], 'for print.')
 
     return batchSelector(listOfBatches)
 
