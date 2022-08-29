@@ -255,6 +255,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
     count = 1
     JSONitem = JSON['order']['item']
     orderNumber = JSON['orderNumber']
+    orderTroubleStatus = JSON['type']
     keepTrackOfOrderNumber(orderNumber)
     orderDueDate = JSON['orderDueDate']
     shipVia = gv.shippingMethods[JSON['shippingInfo']['method']['shipvia']]
@@ -287,7 +288,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
                 # See Length Notes at the end of the function for an explanation.
             newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
             renamePDF(originalPDFName, newPDFName)
-            if orderTroubleNotes != '':
+            if (orderTroubleStatus == 'billable') or (orderTroubleNotes == 'unbillable'):
                 applyTag('order trouble', gv.downloadDir + newPDFName + '.pdf')
             keepTrackOfPDF(orderNumber, originalPDFName) 
             count += 1
@@ -351,7 +352,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
 
         newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
         renamePDF(originalPDFName, newPDFName)
-        if orderTroubleNotes != '':
+        if (orderTroubleStatus == 'billable') or (orderTroubleNotes == 'unbillable'):
                 applyTag('order trouble', gv.downloadDir + newPDFName + '.pdf')
         keepTrackOfPDF(orderNumber, originalPDFName) 
         count += 1
