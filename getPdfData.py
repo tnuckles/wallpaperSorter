@@ -18,7 +18,6 @@ def orderItem(pdf):
     return name(pdf).split('-')[1]
 
 def dueDate(pdf):
-    #return datetime.date(datetime.strptime(name(pdf).split('(')[1].split(')')[0], '%Y-%m-%d'))
     fileName = name(pdf)
     return datetime.date(datetime.strptime(fileName.split('(')[1].split(')')[0], '%Y-%m-%d')) 
 

@@ -1,18 +1,25 @@
 #!usr/bin/env python
 
 import os
-from datetime import date, datetime
+from datetime import date
 from sqlitedict import SqliteDict
 
-today = datetime.today()
+today = date.today()
 
 #Location for Caldera's Folders
 if os.path.expanduser('~').split('/')[-1] == 'Trevor':
     calderaDir = '/opt/caldera/var/public/'
     driveLocation = '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Test Fulfillment'
 else:
-    calderaDir = '/Volumes/Print Drive/caldera/public/'
+    calderaDir = '/opt/caldera/var/public/'
     driveLocation = '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Fulfillment'
+
+getHeader = {
+    'ot':'/opt/caldera/var/public/z_Storage/assets/headers/999999999-headerOt.pdf',
+    'late':'/opt/caldera/var/public/z_Storage/assets/headers/999999999-headerLate.pdf',
+    'today':'/opt/caldera/var/public/z_Storage/assets/headers/999999999-headerToday.pdf',
+    'future':'/opt/caldera/var/public/z_Storage/assets/headers/999999999-headerFuture.pdf',
+}
 
 orderdb = calderaDir + 'z_Storage/z_WallpaperDB/lvdOrderDatabase.sqlite'
 ordersDict = SqliteDict(orderdb, autocommit=True)
@@ -91,4 +98,4 @@ countOfRefPdfs = { #Running count of PDFs that are referenced during sample crea
 orderItemsDict = {
 }
 
-today = date.today()
+

@@ -1,10 +1,10 @@
 #!usr/bin/env python
 
-from batchCreate import getPdfGlob
 import batchMenu as bMenu
+from batchCreate import getPdfGlob
 from batchSorting import calculateFull, calculateSample, sortPdfs, sortPdfsByOrderNumber
 from batchCreate import createBatch, createBatchFolderAndMovePdfs
-import getPdfData as getPdf
+from wallpaperSorterVariables import getHeader
 
 ### Global Variables
 
@@ -18,16 +18,26 @@ currentBatchDict = {
             'length':0,
             'materialLength':0,
             'careAboutminLength':True,
-            'includeOTs':False
+            'includeOTs':False,
+            'colorGuides':{
+                'default':'/opt/caldera/var/public/z_Storage/Utility/LvD Color Chart Rotated.pdf',
+                'uniqueFilename':''
+            },
+            'rollStickers':{
+                'default':'/opt/caldera/var/public/z_Storage/Utility/LvD Color Chart Rotated.pdf',
+                'uniqueFilename':''
+            },
         },
         'OT':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['ot']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['ot']
             },
             'header':'',
         },
@@ -35,10 +45,12 @@ currentBatchDict = {
             'full':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['late']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['late']
             },
             'header':'',
         },
@@ -46,10 +58,12 @@ currentBatchDict = {
             'full':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['today']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['today']
             },
             'header':'',
         },
@@ -57,10 +71,12 @@ currentBatchDict = {
             'full':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['future']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['future']
             },
             'header':'',
         },
@@ -135,7 +151,7 @@ def buildABatch(): # Begins the batch building process
     minBatchLength = batchDetails['materialLength'] * minLength
 
     # gets available print PDFs
-    fillAvailablePdfsDict(material, includeOTs)
+    fillAvailablePdfsDict(material)
     
     # if we're caring about min length, check here to ensure there's enough to meet the min length
     if batchDetails['minLength'] == True:
@@ -174,8 +190,8 @@ def otCheck(material):
     otFullCount = len(getPdfGlob('OT', material, 'full'))
     otSampCount = len(getPdfGlob('OT', material, 'Sample'))
     if (otFullCount > 0) or (otSampCount > 0):
-        print('Full', material, 'Order Troubles:', str(otFullCount))
-        print('Sample', material, 'Order Troubles:', str(otSampCount))
+        print('| Full', material, 'Order Troubles:', str(otFullCount))
+        print('| Sample', material, 'Order Troubles:', str(otSampCount))
         return bMenu.includeOTs()
     else:
         return False
@@ -193,17 +209,16 @@ def checkminLength(material, minBatchLength):
     else:
         return
 
-def fillAvailablePdfsDict(material, includeOTs):
+def fillAvailablePdfsDict(material):
     '''OT Pdfs'''
-    if includeOTs == True:
-        # gets a sorted list of OT Full Pdfs
-        availablePdfs['OT']['full']['batchList'] = sortPdfs(getPdfGlob('OT', material, 'full'))
-        # gets a length for the sorted list of OT Full Pdfs
-        availablePdfs['OT']['full']['batchLength'] = calculateFull(availablePdfs['OT']['full']['batchList'])
-        # gets a list of OT Sample Pdfs
-        availablePdfs['OT']['sample']['batchList'] = sortPdfsByOrderNumber(getPdfGlob('OT', material, 'sample'))
-        # gets a length of OT Sample Pdfs
-        availablePdfs['OT']['sample']['batchLength'] = calculateSample(availablePdfs['OT']['sample']['batchList'])
+    # gets a sorted list of OT Full Pdfs
+    availablePdfs['OT']['full']['batchList'] = sortPdfs(getPdfGlob('OT', material, 'full'))
+    # gets a length for the sorted list of OT Full Pdfs
+    availablePdfs['OT']['full']['batchLength'] = calculateFull(availablePdfs['OT']['full']['batchList'])
+    # gets a list of OT Sample Pdfs
+    availablePdfs['OT']['sample']['batchList'] = sortPdfsByOrderNumber(getPdfGlob('OT', material, 'sample'))
+    # gets a length of OT Sample Pdfs
+    availablePdfs['OT']['sample']['batchLength'] = calculateSample(availablePdfs['OT']['sample']['batchList'])
     '''Late Pdfs'''
     availablePdfs['Late']['full']['batchList'] = sortPdfs(getPdfGlob('Late', material, 'full'))
     availablePdfs['Late']['full']['batchLength'] = calculateFull(availablePdfs['Late']['full']['batchList'])
@@ -234,16 +249,26 @@ def resetCurrentBatchDict(): # sets currentBatchDict to default/empty values.
             'length':0,
             'materialLength':0,
             'careAboutminLength':True,
-            'includeOTs':False
+            'includeOTs':False,
+            'colorGuides':{
+                'default':'/opt/caldera/var/public/z_Storage/Utility/LvD Color Chart Rotated.pdf',
+                'uniqueFilename':''
+            },
+            'rollStickers':{
+                'default':'/opt/caldera/var/public/z_Storage/Utility/LvD Color Chart Rotated.pdf',
+                'uniqueFilename':''
+            },
         },
         'OT':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['ot']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['ot']
             },
             'header':'',
         },
@@ -251,10 +276,12 @@ def resetCurrentBatchDict(): # sets currentBatchDict to default/empty values.
             'full':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['late']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['late']
             },
             'header':'',
         },
@@ -262,10 +289,12 @@ def resetCurrentBatchDict(): # sets currentBatchDict to default/empty values.
             'full':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['today']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['today']
             },
             'header':'',
         },
@@ -273,10 +302,12 @@ def resetCurrentBatchDict(): # sets currentBatchDict to default/empty values.
             'full':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['future']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
+                'header':getHeader['future']
             },
             'header':'',
         },

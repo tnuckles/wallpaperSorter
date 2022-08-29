@@ -10,10 +10,9 @@ from shutil import move, copy, Error
 from os import mkdir, remove, rmdir, walk, listdir
 from PyPDF2 import utils
 
-
 def getPdfGlob(dueDate, material, fullOrSamp): # Takes a "due date" (OT, Late, Today, Future), a material type, and full or sample, then returns a glob list 
     dueDateLookup = {
-        'OT':'1 - OT Orders/',
+        'OT':'1 - OT/',
         'Late':'2 - Late/',
         'Today':'3 - Today/',
         'Future':'4 - Future/',
@@ -35,7 +34,7 @@ def createBatch(currentBatchDict, availablePdfs): # gathers PDFs for the new bat
     # iterates through avialable PDFs and calls the batch loop control to add them to the current batch list
     if includeOTs == True: #checks whether or not the batch should contain order trouble PDFs
         currentBatchDict = batchLoopController('OT','full',currentBatchDict, availablePdfs)
-    if currentBatchDict['batchDetails']['length'] < (currentBatchDict['batchDetails']['materialLength'] - 9.6): #if there's at least room for one sample, check for samples
+    if (includeOTs == True) and (currentBatchDict['batchDetails']['length'] < (currentBatchDict['batchDetails']['materialLength'] - 9.6)): #if the batch should include OTs and there's at least room for one sample, check for samples
         currentBatchDict = batchLoopController('OT','sample',currentBatchDict, availablePdfs)
     if currentBatchDict['batchDetails']['length'] < currentBatchDict['batchDetails']['materialLength'] - 96: #if there's at least room for 8' panel, check for more full orders. Otherwise, move onto samples
         currentBatchDict = batchLoopController('Late','full',currentBatchDict, availablePdfs)
@@ -49,17 +48,19 @@ def createBatch(currentBatchDict, availablePdfs): # gathers PDFs for the new bat
         currentBatchDict = batchLoopController('Future','full',currentBatchDict, availablePdfs)
     if currentBatchDict['batchDetails']['length'] < (currentBatchDict['batchDetails']['materialLength'] - 9.6): #if there's at least room for one sample, check for samples
         currentBatchDict = batchLoopController('Future','sample',currentBatchDict, availablePdfs)
-    
+
     currentBatchDict['batchDetails']['priority'] = setBatchPriority(currentBatchDict)
+    addColorGuides(currentBatchDict)
     
     return currentBatchDict
 
 def createBatchFolderAndMovePdfs(currentBatchDict): # Creates a new batch folder and moves the pdfs over.
     # variables from currentBatchDict for the new batch directory
     batchID = currentBatchDict['batchDetails']['ID']
-    batchMaterial = currentBatchDict['batchDetails']['material']
     batchPriority = currentBatchDict['batchDetails']['priority']
+    batchMaterial = currentBatchDict['batchDetails']['material']
     batchLength = currentBatchDict['batchDetails']['length']
+    materialLength = currentBatchDict['batchDetails']['materialLength']
     tag = 'Hotfolder'
     
     # new batch directory name and path assembly
@@ -104,8 +105,10 @@ def createBatchFolderAndMovePdfs(currentBatchDict): # Creates a new batch folder
         batchPriorityCounter += 1
         if len(batchList) > 0:
             for printPdf in batchList:
-                tryToMovePDF(printPdf, batchPriorityDict[batchPriorityCounter], getPdf.friendlyName(printPdf))
-    
+                if '999999999-header' not in printPdf:
+                    tryToMovePDF(printPdf, batchPriorityDict[batchPriorityCounter], getPdf.friendlyName(printPdf))
+                    continue
+                copy(printPdf, batchPriorityDict[batchPriorityCounter]) #this should copy over the header very last
     batchPriorityCounter = 0
 
     # after moving items, iterate through full orders and split any that are >2 repeat.
@@ -117,12 +120,45 @@ def createBatchFolderAndMovePdfs(currentBatchDict): # Creates a new batch folder
                 print('| Couldn\'t split file. In case it\'s needed, a copy of the original file is in "#Past Orders/Original Files"')
                 print('| PDF:', getPdf.friendlyName(printPdf))
                 tag = 'Manual'
-    
+
+    # Check if a color guide or roll stickers needs to be added, then add them.
+    if currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'] != '':
+        copy(currentBatchDict['batchDetails']['colorGuides']['default'], batchDirectory + currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'])
+    if currentBatchDict['batchDetails']['rollStickers']['uniqueFilename'] != '':
+        copy(currentBatchDict['batchDetails']['rollStickers']['default'], batchDirectory + currentBatchDict['batchDetails']['rollStickers']['uniqueFilename'])
+
     # apply the manual or hotfolder tag
     applyTag(tag, batchDirectory)
     removeEmptyDirectories(batchDirectory)
 
     return
+
+def addColorGuides(currentBatchDict): # check if the total length can fit color guides or roll stickers, and add them appropriately
+    batchMaterial = currentBatchDict['batchDetails']['material']
+    batchLength = currentBatchDict['batchDetails']['length']
+    materialLength = currentBatchDict['batchDetails']['materialLength']
+
+
+    if batchLength <= materialLength - 8:
+        utilityQty = floor((materialLength - batchLength)/9.5)
+        if utilityQty == 0:
+            utilityQty = 1
+            currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'] = '/5 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(utilityQty*2) + '-Color Chart-L' + str(utilityQty * 9.5) + '-W25-H9.pdf'
+            batchLength += (utilityQty * 9.5)
+        elif utilityQty <= 11:
+            currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'] = '/5 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(utilityQty*2) + '-Color Chart-L' + str(utilityQty * 9.5) + '-W25-H9.pdf'
+            batchLength += (utilityQty * 9.5)
+        elif utilityQty > 11:
+            stickerRollQty = 2
+            utilityQty = utilityQty - stickerRollQty
+            currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'] = '/5 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(utilityQty*2) + '-Color Chart-L' + str(utilityQty * 9.5) + '-W25-H9.pdf'
+            currentBatchDict['batchDetails']['rollStickers']['uniqueFilename'] = '/5 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(stickerRollQty*2) + '-Roll Stickers-L19-W25-H9.pdf'
+            batchLength += (utilityQty * 9.5)
+            batchLength += 19
+
+    currentBatchDict['batchDetails']['length'] = batchLength
+    
+    return currentBatchDict
 
 def makeBatchDirectories(batchDirectory): # makes all the proper batch directories for the batch folder to keep it organized
     batchListDict = (
@@ -130,6 +166,7 @@ def makeBatchDirectories(batchDirectory): # makes all the proper batch directori
         batchDirectory + '/2 - Late',
         batchDirectory + '/3 - Today',
         batchDirectory + '/4 - Future',
+        batchDirectory + '/5 - Utility'
     )
     batchListDict2 = (
         batchListDict[0] + '/Full',
@@ -200,9 +237,15 @@ def batchLoopController(dueDate, fullOrSamp, currentBatchDict, availablePdfs): #
     if fullOrSamp.lower() == 'full':
         currentBatchDict[dueDate][fullOrSamp] = batchLoopFull(currentBatchDict['batchDetails'], currentBatchDict[dueDate][fullOrSamp], availablePdfs[dueDate][fullOrSamp]['batchList'])
         currentBatchDict['batchDetails']['length'] += currentBatchDict[dueDate][fullOrSamp]['batchLength']
+        if len(currentBatchDict[dueDate][fullOrSamp]['batchList']) > 0:
+            currentBatchDict[dueDate][fullOrSamp]['batchList'].append(currentBatchDict[dueDate][fullOrSamp]['header'])
+            currentBatchDict['batchDetails']['length'] += 1.75
     else:
         currentBatchDict[dueDate][fullOrSamp] = batchLoopSample(currentBatchDict['batchDetails'], currentBatchDict[dueDate][fullOrSamp], availablePdfs[dueDate][fullOrSamp]['batchList'])
         currentBatchDict['batchDetails']['length'] += currentBatchDict[dueDate][fullOrSamp]['batchLength']
+        if len(currentBatchDict[dueDate][fullOrSamp]['batchList']) > 0:
+            currentBatchDict[dueDate][fullOrSamp]['batchList'].append(currentBatchDict[dueDate][fullOrSamp]['header'])
+            currentBatchDict['batchDetails']['length'] += 1.75
     return currentBatchDict
 
 def checkForOtherSamplesOfSameOrder(orderNumber, sortedList, samplesAllowed, samplesAdded): # when adding samples to a batch, checks for and counts other samples in the same order, ensures they will all fit in the batch.

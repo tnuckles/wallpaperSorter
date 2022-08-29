@@ -142,15 +142,17 @@ def checkOrderDirectoryStructure():
 
 def moveForDueDates():
     print('\n| Updating Orders. Today\'s date:', today)
-    for file in glob.iglob(gv.sortingDir + '**/*.pdf', recursive=True):
-        friendlyName = getPdf.friendlyName(file)
-        orderDueDate = getPdf.dueDate(file) 
-        material = getPdf.material(file)
-        orderSize = getPdf.size(file)
-        repeat = getPdf.repeat(file)
-        oddOrEven = getPdf.oddOrEven(file)   
-        orderLength = getPdf.length(file)
-        if orderDueDate < today:
+    for printPdf in glob.iglob(gv.sortingDir + '**/*.pdf', recursive=True):
+        friendlyName = getPdf.friendlyName(printPdf)
+        orderDueDate = getPdf.dueDate(printPdf)
+        material = getPdf.material(printPdf)
+        orderSize = getPdf.size(printPdf)
+        repeat = getPdf.repeat(printPdf)
+        oddOrEven = getPdf.oddOrEven(printPdf)   
+        orderLength = getPdf.length(printPdf)
+        if 'order trouble' in str(checkTags(printPdf)):
+            orderDueDate = '1 - OT/'
+        elif orderDueDate < today:
             orderDueDate = '2 - Late/'
         elif orderDueDate > today:
             orderDueDate = '4 - Future/'
@@ -160,44 +162,44 @@ def moveForDueDates():
         if material == 'Wv':
             if orderLength >= gv.dirLookupDict['MaterialLength']['Woven']:
                 try:
-                    shutil.copy(file, gv.needsAttention)
+                    shutil.copy(printPdf, gv.needsAttention)
                     try:
-                        os.remove(file)
+                        os.remove(printPdf)
                         continue
                     except:
-                        print('|> Could not remove ', file)
+                        print('|> Could not remove ', printPdf)
                 except OSError as err:
                     print(err)
         elif material == 'Sm':
             if orderLength >= gv.dirLookupDict['MaterialLength']['Smooth']:
                 try:
-                    shutil.copy(file, gv.needsAttention)
+                    shutil.copy(printPdf, gv.needsAttention)
                     try:
-                        os.remove(file)
+                        os.remove(printPdf)
                         continue
                     except:
-                        print('|> Could not remove ', file)
+                        print('|> Could not remove ', printPdf)
                 except OSError as err:
                     print(err)
         if orderSize == 'Samp':
             try:
-                shutil.move(file, gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Sample/')
+                shutil.move(printPdf, gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Sample/')
                 print('| Updated:', friendlyName)
             except:
                 try:
-                    shutil.copy(file, gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Sample/')
-                    os.remove(file)
+                    shutil.copy(printPdf, gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Sample/')
+                    os.remove(printPdf)
                     print('| Updated:', friendlyName)
                 except shutil.SameFileError:
                     continue
         else:
             try:
-                shutil.move(file, gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Full/' + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven])
+                shutil.move(printPdf, gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Full/' + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven])
                 print('| Updated:', friendlyName)
             except:
                 try:
-                    shutil.copy(file, gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Full/' + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven])
-                    os.remove(file)
+                    shutil.copy(printPdf, gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Full/' + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven])
+                    os.remove(printPdf)
                     print('| Updated:', friendlyName)
                 except shutil.SameFileError:
                     continue
