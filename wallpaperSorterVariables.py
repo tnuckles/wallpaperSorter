@@ -27,6 +27,7 @@ BatchCounterDB = calderaDir + 'z_Storage/z_WallpaperDB/lvdGlobalBatchCounter.sql
 globalBatchCounter = SqliteDict(BatchCounterDB, autocommit=True)
 #globalBatchCounter['BatchCounter'] = 1
 
+hotfoldersDir = calderaDir + '1 Hotfolders/'
 batchFoldersDir = calderaDir + '2 Batch Folders/'
 downloadDir = calderaDir + '3 Downloaded/'
 needsAttention = calderaDir + '4 Needs Attention/'
