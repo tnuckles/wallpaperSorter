@@ -135,6 +135,8 @@ def buildABatch(): # Begins the batch building process
 
     # Prompts user for batch information and confirms their selection
     batchDetails = bMenu.batchDetailsMenu()
+    if batchDetails == False:
+        return
     currentBatchDict['batchDetails']['includeOTs'] = otCheck(batchDetails['material'])
     bMenu.confirmBatchMenu(batchDetails['material'],int(batchDetails['materialLength']/12))
     

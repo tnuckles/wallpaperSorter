@@ -89,6 +89,7 @@ def batchDetailsMenu(): # Menu to get the main details of a new batch. Returns a
         (4, 'Woven, 100 Feet, Disregard Minimum Length', 'Woven', 95, False),
         (5, 'Smooth, Custom Length, Disregard Minimum Length', 'Smooth', 0, False),
         (6, 'Woven, Custom Length, Disregard Minimum Length', 'Woven', 0, False),
+        (7, 'Return to Main Menu', 'Smooth', 0, True)
     )
     validOptions = populateValidOptions(menuOptions)
 
@@ -96,6 +97,11 @@ def batchDetailsMenu(): # Menu to get the main details of a new batch. Returns a
     printMenuOptions(menuOptions)
     
     command = menuOptions[(getInput(validOptions)-1)]
+    
+    if command[0] == 7:
+        print('\n| Returning to Main Menu')
+        return False
+   
     batchDetails = {
         'material':command[2],
         'materialLength':command[3] * 12,
