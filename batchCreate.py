@@ -2,13 +2,13 @@
 
 import glob
 from math import floor
-import wallpaperSorterVariables as gv
+from PyPDF2 import utils
 import getPdfData as getPdf
 import pdf_splitter as pdfSplitter
-from add_macos_tag import apply_tag as applyTag
 from shutil import move, copy, Error
+import wallpaperSorterVariables as gv
+from add_macos_tag import apply_tag as applyTag
 from os import mkdir, remove, rmdir, walk, listdir
-from PyPDF2 import utils
 
 def getPdfGlob(dueDate, material, fullOrSamp): # Takes a "due date" (OT, Late, Today, Future), a material type, and full or sample, then returns a glob list 
     dueDateLookup = {
@@ -106,9 +106,17 @@ def createBatchFolderAndMovePdfs(currentBatchDict): # Creates a new batch folder
         if len(batchList) > 0:
             for printPdf in batchList:
                 if '999999999-header' not in printPdf:
-                    tryToMovePDF(printPdf, batchPriorityDict[batchPriorityCounter], getPdf.friendlyName(printPdf))
-                    continue
-                copy(printPdf, batchPriorityDict[batchPriorityCounter]) #this should copy over the header very last
+                    if 'BlankPdf' in printPdf: # If the PDF is one of the blank fill in pdfs, copy the original asset and rename it to match the item it's filling in next to
+                        # pdfHeight = str(getPdf.height(printPdf))
+                        # defaultBlankPanel = gv.getBlankPanel[pdfHeight]
+                        # batchDir = batchPriorityDict[batchPriorityCounter]
+                        # newName = batchDir + '/' + printPdf.split('/')[-1]
+                        copy(gv.getBlankPanel[str(getPdf.height(printPdf))], batchPriorityDict[batchPriorityCounter] + '/' + printPdf.split('/')[-1])
+                    else:    
+                        tryToMovePDF(printPdf, batchPriorityDict[batchPriorityCounter], getPdf.friendlyName(printPdf))
+                        continue
+                if '999999999-header' in printPdf:
+                    copy(printPdf, batchPriorityDict[batchPriorityCounter]) #this should copy over the header very last
     batchPriorityCounter = 0
 
     # after moving items, iterate through full orders and split any that are >2 repeat.
@@ -329,6 +337,11 @@ def batchLoopFull(batchDetailsDict, batchDateDict, availablePdfs): # loop for ad
                     if currentLength + pdfLength > maxLength * .93: # if the current item in the iteration will put the batch over the max length, skip it.
                         continue
                     else:
+                        if pdfHeight != oddMatchHeight: #if the next item in the list doesn't match the pdfHeight, add a blank panel to the batch. Shouldn't need to change the height because it should always fit for odds.
+                            # orderNumber = getPdf.orderNumber(printPdf)
+                            # pathToFillIn = gv.getBlankPanel[pdfHeight].replace('999999999', getPdf.orderNumber(printPdf))
+                            # appends the batch list with a blank panel that has the default "999999999" replaced with the order's number. The height of the PDF is selected based on the last item in the batch list
+                            batchList.append(gv.getBlankPanel[str(getPdf.height(batchList[-1]))].replace('999999999', getPdf.orderNumber(printPdf))) 
                         currentLength += pdfLength # because we feed the loop sorted items, the very next item in the list should match. If it doesn't, it means there are no matching items and the current PDF should be added to the order and the length added normally.
                         batchList.append(printPdf)
                         oddMatchHeight = pdfHeight
