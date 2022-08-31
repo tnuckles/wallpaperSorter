@@ -351,7 +351,10 @@ def renamePDF(old, new, JSONFilePath, missingFileList):
         os.rename(old, itemName)
         os.rename(old + ' - temp', old)
     except OSError:
-        shutil.move(JSONFilePath, gv.needsAttention)
+        try:
+            shutil.move(JSONFilePath, gv.needsAttention)
+        except:
+            pass
         missingFileList.append(itemName.split("-")[0])
     
     return missingFileList
@@ -407,8 +410,6 @@ def splitMultiPagePDFs():
         for item in damagedFilesList:
             print(f'|   {item}')
         print()
-
-
 
 def sortPDFsByDetails():
     print('\n| Starting Sort Process. This may take a long time.')

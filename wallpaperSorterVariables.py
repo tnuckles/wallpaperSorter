@@ -15,10 +15,28 @@ else:
     driveLocation = '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Fulfillment'
 
 getHeader = {
-    'ot':'/opt/caldera/var/public/z_Storage/assets/headers/999999999-headerOt.pdf',
-    'late':'/opt/caldera/var/public/z_Storage/assets/headers/999999999-headerLate.pdf',
-    'today':'/opt/caldera/var/public/z_Storage/assets/headers/999999999-headerToday.pdf',
-    'future':'/opt/caldera/var/public/z_Storage/assets/headers/999999999-headerFuture.pdf',
+    'ot': calderaDir + 'z_Storage/assets/headers/999999999-headerOt.pdf',
+    'late': calderaDir + 'z_Storage/assets/headers/999999999-headerLate.pdf',
+    'today': calderaDir + 'z_Storage/assets/headers/999999999-headerToday.pdf',
+    'future': calderaDir + 'z_Storage/assets/headers/999999999-headerFuture.pdf',
+}
+
+getBlankPanel = {
+    '40.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 3Foot-L40.75-W25-H40.25.pdf',
+    '52.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 4Foot-L52.75-W25-H52.25.pdf',
+    '64.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 5Foot-L64.75-W25-H64.25.pdf',
+    '76.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 6Foot-L76.75-W25-H76.25.pdf',
+    '88.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 7Foot-L88.75-W25-H88.25.pdf',
+    '100.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 8Foot-L100.75-W25-H100.25.pdf',
+    '112.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 9Foot-L112.75-W25-H112.25.pdf',
+    '124.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 10Foot-L124.75-W25-H124.25.pdf',
+    '136.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 11Foot-L136.75-W25-H136.25.pdf',
+    '146.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 12Foot-L146.75-W25-H146.25.pdf',
+}
+
+getUtilityFiles = {
+    'colorGuide': calderaDir + 'z_Storage/assets/color guides/LvD Color Chart Rotated.pdf',
+    'rollSticker': calderaDir + 'z_Storage/assets/roll stickers/LvD Roll Stickers Rotated.pdf',
 }
 
 orderdb = calderaDir + 'z_Storage/z_WallpaperDB/lvdOrderDatabase.sqlite'
