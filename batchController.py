@@ -4,7 +4,7 @@ import batchMenu as bMenu
 from batchCreate import getPdfGlob
 from batchSorting import calculateFull, calculateSample, sortPdfs, sortPdfsByOrderNumber
 from batchCreate import createBatch, createBatchFolderAndMovePdfs
-from wallpaperSorterVariables import getHeader
+from wallpaperSorterVariables import getHeader, getUtilityFiles
 
 ### Global Variables
 
@@ -20,11 +20,11 @@ currentBatchDict = {
             'careAboutminLength':True,
             'includeOTs':False,
             'colorGuides':{
-                'default':'/opt/caldera/var/public/z_Storage/Utility/LvD Color Chart Rotated.pdf',
+                'default':getUtilityFiles['colorGuide'],
                 'uniqueFilename':''
             },
             'rollStickers':{
-                'default':'/opt/caldera/var/public/z_Storage/Utility/LvD Color Chart Rotated.pdf',
+                'default':getUtilityFiles['rollSticker'],
                 'uniqueFilename':''
             },
         },
@@ -253,11 +253,11 @@ def resetCurrentBatchDict(): # sets currentBatchDict to default/empty values.
             'careAboutminLength':True,
             'includeOTs':False,
             'colorGuides':{
-                'default':'/opt/caldera/var/public/z_Storage/Utility/LvD Color Chart Rotated.pdf',
+                'default':getUtilityFiles['colorGuide'],
                 'uniqueFilename':''
             },
             'rollStickers':{
-                'default':'/opt/caldera/var/public/z_Storage/Utility/LvD Color Chart Rotated.pdf',
+                'default':getUtilityFiles['rollSticker'],
                 'uniqueFilename':''
             },
         },
