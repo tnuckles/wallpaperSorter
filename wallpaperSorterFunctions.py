@@ -3,8 +3,6 @@
 import zipfile as zf
 from batchCreate import tryToMovePDF
 import getPdfData as getPdf
-import batchCreation as batch
-import batchController as batchCtrl 
 import wallpaperSorterVariables as gv
 import os, shutil, math, datetime, time, json, glob, pikepdf
 
@@ -147,6 +145,7 @@ def moveForDueDates():
         print(f'\n| ****\n| 4 Needs Attention has {gv.needsAttentionDir} file(s) that need attention.\n| ****\n')  
 
 def findJSONs(): #iterates over a given folder, unzips files, finds JSON files, and calls parseJSONDerulo
+    missingFileList = []
     os.chdir(gv.downloadDir)
     for roots, dirs, files in os.walk(gv.downloadDir):
         for file in files:
@@ -170,9 +169,10 @@ def findJSONs(): #iterates over a given folder, unzips files, finds JSON files, 
                     print('| Could not remove ' + file)
             else:
                 if ext == '.json':
+                    filePath = roots + file
                     with open(file) as file:
                         JSONDerulo = json.load(file)
-                    parseJSONDerulo(JSONDerulo)
+                    missingFileList = parseJSONDerulo(JSONDerulo, filePath, missingFileList)
     for roots, dirs, files in os.walk(gv.downloadDir):
         for file in files:
             ext = os.path.splitext(file)[-1].lower()
@@ -188,14 +188,20 @@ def findJSONs(): #iterates over a given folder, unzips files, finds JSON files, 
                 except IndexError:
                     continue
 
-def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate information for related PDFs, and renames files
+    if len(missingFileList) > 0:
+        print('\n| The following packages had missing PDFs and were moved to 4 Needs Attention:')
+        for item in missingFileList:
+            print(f'|   {item}')
+        print()
+
+def parseJSONDerulo(JSONfile, JSONfilepath, missingFileList): #reads through an JSON file, finds the appropriate information for related PDFs, and renames files
     count = 1
-    JSONitem = JSON['order']['item']
-    orderNumber = JSON['orderNumber']
-    orderTroubleStatus = JSON['type']
+    JSONitem = JSONfile['order']['item']
+    orderNumber = JSONfile['orderNumber']
+    orderTroubleStatus = JSONfile['type']
     keepTrackOfOrderNumber(orderNumber)
-    orderDueDate = JSON['orderDueDate']
-    shipVia = gv.shippingMethods[JSON['shippingInfo']['method']['shipvia']]
+    orderDueDate = JSONfile['orderDueDate']
+    shipVia = gv.shippingMethods[JSONfile['shippingInfo']['method']['shipvia']]
     try:
         for itemNum in range(len(JSONitem)):
             originalPDFName = JSONitem[itemNum]['filename']
@@ -209,7 +215,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
             height = JSONitem[itemNum]['height'] 
             width = JSONitem[itemNum]['width']
             repeat = JSONitem[itemNum]['wallpaperRepeat']
-            orderTroubleNotes = JSON['order_trouble_notes']
+            orderTroubleNotes = JSONfile['order_trouble_notes']
             if width == '9':
                 orderSize = 'Samp'
                 length = '9.5'
@@ -224,7 +230,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
                 length = str(getPdf.calculateLength(quantity, height))
                 # See Length Notes at the end of the function for an explanation.
             newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
-            renamePDF(originalPDFName, newPDFName)
+            missingFileList = renamePDF(originalPDFName, newPDFName, JSONfilepath, missingFileList)
             if (orderTroubleStatus == 'billable') or (orderTroubleNotes == 'unbillable'):
                 applyTag('order trouble', gv.downloadDir + newPDFName + '.pdf')
             keepTrackOfPDF(orderNumber, originalPDFName) 
@@ -273,7 +279,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
         height = JSONitem['height']
         width = JSONitem['width']
         repeat = JSONitem['wallpaperRepeat']
-        orderTroubleNotes = JSON['order_trouble_notes']
+        orderTroubleNotes = JSONfile['order_trouble_notes']
         if width == '9':
             orderSize = 'Samp'
             length = '9.5'
@@ -288,7 +294,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
             length = str(getPdf.calculateLength(quantity, height))
 
         newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
-        renamePDF(originalPDFName, newPDFName)
+        missingFileList = renamePDF(originalPDFName, newPDFName, JSONfilepath, missingFileList)
         if (orderTroubleStatus == 'billable') or (orderTroubleNotes == 'unbillable'):
                 applyTag('order trouble', gv.downloadDir + newPDFName + '.pdf')
         keepTrackOfPDF(orderNumber, originalPDFName) 
@@ -328,6 +334,8 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
                 }
             }
     
+    return missingFileList
+    
     ''' # Length Notes: I will never remember why I did this, so here are my notes. The length is the length of material an order will take up.
         # Length Notes: The above equation takes the quantity and divides it by two since we can fit two panels side by side.
         # Length Notes: it then multiplies that by the height to get the overall length of material.
@@ -335,74 +343,7 @@ def parseJSONDerulo(JSON): #reads through an JSON file, finds the appropriate in
         # Length Notes: lastly, it takes the quantity % 2 to see if the quantity is odd or not. If the quantity is odd, then it will add on one more length of .5"
         # Length Notes: for the times that a panel is by itself and still has another .5" section.'''
 
-def parseJsonLoop(JSON, JSONitem, orderNumber, itemNum, orderDueDate, shipVia):
-    originalPDFName = JSONitem[itemNum]['filename']
-    itemID = originalPDFName.split('_')[0]
-    try:
-        templateName = JSONitem[itemNum]['description'].split(' ')[2] + ' ' + JSONitem[itemNum]['description'].split(' ')[3]
-    except IndexError:
-        templateName = JSONitem[itemNum]['description'].split(' Wallpaper')[0]
-    paperType = gv.substrate[JSONitem[itemNum]['paper']]
-    quantity = JSONitem[itemNum]['quantityOrdered']
-    height = JSONitem[itemNum]['height'] 
-    width = JSONitem[itemNum]['width']
-    repeat = JSONitem[itemNum]['wallpaperRepeat']
-    orderTroubleNotes = JSON['order_trouble_notes']
-    if width == '9':
-        orderSize = 'Samp'
-        length = '9.5'
-        height = '9'
-        width = '25'
-    else:
-        width = str(int(width) * int(quantity) + 1)
-        height = str(int(height) + 4.25)
-        if height == '148.25':
-            height = '146.25'
-        orderSize = 'Full'
-        length = getPdf.calculateLength(quantity, height)
-        # See Length Notes at the end of the function for an explanation.
-    newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
-    renamePDF(originalPDFName, newPDFName)
-    keepTrackOfPDF(orderNumber, originalPDFName) 
-    count += 1
-    if orderNumber in gv.orderItemsDict:
-        gv.orderItemsDict[orderNumber][itemID] = {
-            'Status': 'Sorted',
-            'Due Date': orderDueDate,
-            'Shipping': shipVia,
-            'Material': paperType,
-            'Order Size': orderSize,
-            'Repeat': repeat.split('\'')[0],
-            'Quantity': quantity,
-            'Template': templateName,
-            'Length': length,
-            'Width': width,
-            'Height': height,
-            'OT Notes': orderTroubleNotes,
-            'File Path': gv.sortingDir + '2 - Late/' + gv.dirLookupDict[paperType] + gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + gv.dirLookupDict[int(quantity) % 2] + newPDFName,
-        }
-    else:
-        gv.orderItemsDict[orderNumber] = {
-            itemID : {
-                'Status': 'Sorted',
-                'Due Date': orderDueDate,
-                'Shipping': shipVia,
-                'Material': paperType,
-                'Order Size': orderSize,
-                'Repeat': repeat.split('\'')[0],
-                'Quantity': quantity,
-                'Template': templateName,
-                'Length': length,
-                'Width': width,
-                'Height': height,
-                'OT Notes': orderTroubleNotes,
-                'File Path': gv.sortingDir + '2 - Late/' + gv.dirLookupDict[paperType] + gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + gv.dirLookupDict[int(quantity) % 2] + newPDFName,
-            }
-        }
-    
-    str((math.ceil(int(quantity)/2)*float(height) + ((math.floor(int(quantity)/2) * .5) + ((int(quantity) % 2) * .5))))
-
-def renamePDF(old, new):
+def renamePDF(old, new, JSONFilePath, missingFileList):
     extension = old.split(".")[-1]
     itemName = new + "." + extension
     try:
@@ -410,7 +351,10 @@ def renamePDF(old, new):
         os.rename(old, itemName)
         os.rename(old + ' - temp', old)
     except OSError:
-        print("\n| Error Renaming. PDF may not exist in package." + "\n| Original File Name: " + old + "\n| New Item Name: " + itemName + "\n| *** Please check order", itemName.split("-")[0],"***")
+        shutil.move(JSONFilePath, gv.needsAttention)
+        missingFileList.append(itemName.split("-")[0])
+    
+    return missingFileList
 
 def keepTrackOfOrderNumber(orderNumber): #keeps track of the original PDF names to alert fulfillment to multi-paper type PDFs
     if orderNumber in gv.countOfRefPdfs:
@@ -432,16 +376,17 @@ def reportDuplicatePDFs(): #prints out any PDFs from keepTrackOfOrderNumber() th
                 print('| ' + orderNumber + ': ' + pdfName.replace('_',' '))
 
 def splitMultiPagePDFs():
+    damagedFilesList = []
     for file in glob.iglob(gv.downloadDir + '*.pdf'):
         try:
             pdf = pikepdf.Pdf.open(file)
             NumOfPages = len(pdf.pages)
         except:
-            print(f'\n| Couldn\'t check the number of pages on {file}')
+            damagedFilesList.append(getPdf.name(file))
+            shutil.move(file, gv.needsAttention + file.split('/')[-1].split('.pdf')[0] + '_DAMAGED.pdf')
             pass
         NumOfPages = len(pdf.pages)
         if NumOfPages > 1:
-                print(f'\n| {file} has more than one page in its PDF. Splitting now.')
                 templateName = getPdf.templateName(file)
                 namePt1 = file.split('Qty ')[0] + 'Qty '
                 namePt2 = file.split(templateName)[1]
@@ -453,9 +398,17 @@ def splitMultiPagePDFs():
                     dst.save(namePt1 + str(quantity) + '-' + templateName + ' Panel ' + str(n + 1) + namePt2)
                 try:
                     os.remove(file)
-                    print(f'\n| Finished splitting {file}')
+                    print(f'| Split: {getPdf.friendlyName(file)} {getPdf.size(file)}')
                 except:
-                    print(f'\n| Split the pages of {file},\nbut couldn\'t remove the original.')
+                    print(f'| Split the pages of {file},\nbut couldn\'t remove the original.')
+    
+    if len(damagedFilesList) > 0:
+        print('\n| The following PDFs were damaged and were moved to 4 Needs Attention:')
+        for item in damagedFilesList:
+            print(f'|   {item}')
+        print()
+
+
 
 def sortPDFsByDetails():
     print('\n| Starting Sort Process. This may take a long time.')
