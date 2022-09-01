@@ -300,26 +300,27 @@ def batchLoopSample(batchDetailsDict, batchDateDict, availablePdfs): # loop for 
     return batchDateDict
 
 def batchLoopFull(batchDetailsDict, batchDateDict, availablePdfs): # loop for adding full pdfs to a batch and calculating length
-    currentLength = batchDetailsDict['length']
+    # currentSectionLength = batchDateDict['batchLength']
+    currentBatchLength = batchDetailsDict['length']
     maxLength = batchDetailsDict['materialLength']
     sortedList = availablePdfs
     batchList = []
     
-    #while (currentLength < (maxLength-24)):
-    currentLength = 0
+    #while (currentSectionLength < (maxLength-24)):
+    currentSectionLength = 0
     findOdd = False
     oddMatchHeight = 0
     for printPdf in sortedList: # begins to iterate over the sorted list
-        if currentLength > (maxLength-39): # if the remianing length is ever less than 39", break the loop. No full panels are shorter than 40", so this will save some time
+        if currentSectionLength + currentBatchLength > (maxLength-39): # if the remianing length is ever less than 39", break the loop. No full panels are shorter than 40", so this will save some time
             break
         pdfLength = getPdf.length(printPdf)
         pdfOddOrEven = getPdf.oddOrEven(printPdf)
         pdfHeight = getPdf.height(printPdf)
         if (findOdd == False): 
-            if currentLength + pdfLength > maxLength * .93: # if the current item in the iteration will put the batch over the max length, skip it.
+            if currentSectionLength + currentBatchLength + pdfLength > maxLength * .93: # if the current item in the iteration will put the batch over the max length, skip it.
                 continue
             else:
-                currentLength += pdfLength # add the length of the item to the length of the batch
+                currentSectionLength += pdfLength # add the length of the item to the length of the batch
                 batchList.append(printPdf) # add the path of the item to the batch list
                 if pdfOddOrEven == 1: # if the item added was odd, set flags to search for an odd item with matching height
                     findOdd = True
@@ -327,14 +328,14 @@ def batchLoopFull(batchDetailsDict, batchDateDict, availablePdfs): # loop for ad
         elif (findOdd == True): # if the current iteration needs to find an odd item
             if pdfOddOrEven == 1: # if the current item in the iteration is odd
                 if oddMatchHeight == pdfHeight: # if the current item also matches the height of the last added item
-                    if (currentLength + (pdfLength - (pdfHeight + .5))) > maxLength * .93: # if adding the current odd item will make the current length greather than the max length, skip it.
+                    if (currentSectionLength + currentBatchLength + (pdfLength - (pdfHeight + .5))) > maxLength * .93: # if adding the current odd item will make the current length greather than the max length, skip it.
                         continue
                     else:
-                        currentLength += (pdfLength - (pdfHeight + .5)) # if the last item and current item match heights, are both odd, and won't make the batch too long, add the length of the new item to the current length but remove the height of one row.  This is because two matching odd panels will fit together on a single row
+                        currentSectionLength += (pdfLength - (pdfHeight + .5)) # if the last item and current item match heights, are both odd, and won't make the batch too long, add the length of the new item to the current length but remove the height of one row.  This is because two matching odd panels will fit together on a single row
                         batchList.append(printPdf) # add the path of the item to the batch list
                         findOdd = False
                 else:
-                    if currentLength + pdfLength > maxLength * .93: # if the current item in the iteration will put the batch over the max length, skip it.
+                    if currentSectionLength + currentBatchLength + pdfLength > maxLength * .93: # if the current item in the iteration will put the batch over the max length, skip it.
                         continue
                     else:
                         if pdfHeight != oddMatchHeight: #if the next item in the list doesn't match the pdfHeight, add a blank panel to the batch. Shouldn't need to change the height because it should always fit for odds.
@@ -342,10 +343,10 @@ def batchLoopFull(batchDetailsDict, batchDateDict, availablePdfs): # loop for ad
                             # pathToFillIn = gv.getBlankPanel[pdfHeight].replace('999999999', getPdf.orderNumber(printPdf))
                             # appends the batch list with a blank panel that has the default "999999999" replaced with the order's number. The height of the PDF is selected based on the last item in the batch list
                             batchList.append(gv.getBlankPanel[str(getPdf.height(batchList[-1]))].replace('999999999', getPdf.orderNumber(printPdf))) 
-                        currentLength += pdfLength # because we feed the loop sorted items, the very next item in the list should match. If it doesn't, it means there are no matching items and the current PDF should be added to the order and the length added normally.
+                        currentSectionLength += pdfLength # because we feed the loop sorted items, the very next item in the list should match. If it doesn't, it means there are no matching items and the current PDF should be added to the order and the length added normally.
                         batchList.append(printPdf)
                         oddMatchHeight = pdfHeight
 
     batchDateDict['batchList'] = batchList
-    batchDateDict['batchLength'] = currentLength
+    batchDateDict['batchLength'] = currentSectionLength
     return batchDateDict
