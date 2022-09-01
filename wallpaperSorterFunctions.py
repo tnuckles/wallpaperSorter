@@ -145,6 +145,7 @@ def moveForDueDates():
         print(f'\n| ****\n| 4 Needs Attention has {gv.needsAttentionDir} file(s) that need attention.\n| ****\n')  
 
 def findJSONs(): #iterates over a given folder, unzips files, finds JSON files, and calls parseJSONDerulo
+    print('| Unzipping downloaded files. This is usually a slow process.')
     missingFileList = []
     os.chdir(gv.downloadDir)
     for roots, dirs, files in os.walk(gv.downloadDir):
@@ -412,7 +413,7 @@ def splitMultiPagePDFs():
         print()
 
 def sortPDFsByDetails():
-    print('\n| Starting Sort Process. This may take a long time.')
+    print('| Sorting PDFs.')
     for printPdf in glob.iglob(gv.downloadDir + '*.pdf'):
         dueDate = dueDateLookup(getPdf.dueDate(printPdf))
         if 'order trouble' in str(checkTags(printPdf)):
@@ -431,7 +432,7 @@ def sortPDFsByDetails():
         
         tryToMovePDF(printPdf, pathToMove, getPdf.friendlyName(printPdf))
     
-    print('| Finished sorting files.')
+    print('| Finished sorting PDFs.')
     if len(glob.glob(gv.needsAttention + '*.pdf')) > 0:
         print(f'\n| ****\n| 4 Needs Attention has', len(glob.glob(gv.needsAttention + '*.pdf')), 'file(s) that need attention.\n| ****\n')
 
