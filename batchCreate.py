@@ -342,10 +342,14 @@ def batchLoopFull(batchDetailsDict, batchDateDict, availablePdfs): # loop for ad
                             # orderNumber = getPdf.orderNumber(printPdf)
                             # pathToFillIn = gv.getBlankPanel[pdfHeight].replace('999999999', getPdf.orderNumber(printPdf))
                             # appends the batch list with a blank panel that has the default "999999999" replaced with the order's number. The height of the PDF is selected based on the last item in the batch list
-                            batchList.append(gv.getBlankPanel[str(getPdf.height(batchList[-1]))].replace('999999999', getPdf.orderNumber(printPdf))) 
+                            batchList.append(gv.getBlankPanel[str(getPdf.height(batchList[-1]))].replace('999999999', getPdf.orderNumber(batchList[-1]))) 
                         currentSectionLength += pdfLength # because we feed the loop sorted items, the very next item in the list should match. If it doesn't, it means there are no matching items and the current PDF should be added to the order and the length added normally.
                         batchList.append(printPdf)
                         oddMatchHeight = pdfHeight
+    
+    # Because we add a blank filler PDF for an item on the succeeding iteration, add a check for the last item in the loop.
+    if getPdf.oddOrEven(batchList[-1]) == 1:
+        batchList.append(gv.getBlankPanel[str(getPdf.height(batchList[-1]))].replace('999999999', getPdf.orderNumber(batchList[-1]))) 
 
     batchDateDict['batchList'] = batchList
     batchDateDict['batchLength'] = currentSectionLength
