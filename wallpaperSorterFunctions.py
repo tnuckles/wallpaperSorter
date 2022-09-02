@@ -414,6 +414,7 @@ def splitMultiPagePDFs():
 
 def sortPDFsByDetails():
     print('| Sorting PDFs.')
+
     for printPdf in glob.iglob(gv.downloadDir + '*.pdf'):
         dueDate = dueDateLookup(getPdf.dueDate(printPdf))
         if 'order trouble' in str(checkTags(printPdf)):
@@ -423,6 +424,7 @@ def sortPDFsByDetails():
         repeat = getPdf.repeat(printPdf)
         oddOrEven = getPdf.oddOrEven(printPdf)
         orderLength = getPdf.length(printPdf)
+        
         if orderLength >= gv.dirLookupDict['MaterialLength'][gv.substrate[material]]:
             tryToMovePDF(printPdf, gv.needsAttention, getPdf.friendlyName(printPdf))
         elif orderSize == 'Full':
@@ -435,6 +437,39 @@ def sortPDFsByDetails():
     print('| Finished sorting PDFs.')
     if len(glob.glob(gv.needsAttention + '*.pdf')) > 0:
         print(f'\n| ****\n| 4 Needs Attention has', len(glob.glob(gv.needsAttention + '*.pdf')), 'file(s) that need attention.\n| ****\n')
+
+def checkForMultiQtySamplePdfs(pdfList):
+    print()
+
+    listOfSampsToDuplicate = []
+    
+    for printPdf in pdfList:
+        quantity = getPdf.quantity(printPdf)
+        if quantity > 1:
+            pdfName = getPdf.templateName(printPdf)
+            sampToDuplicate = []
+            sampToDuplicate.append(printPdf)
+            for i in range(quantity):
+                firstHalf = printPdf.split('Qty ' + str(quantity))[0]
+                pdfNameWithCounter = pdfName + '(' + str(i+1) + ')'
+                secondHalf = printPdf.split(pdfName)[1]
+                newNameToDuplicate = firstHalf + 'Qty 1-' + pdfNameWithCounter + ' ' +  secondHalf
+                sampToDuplicate.append(newNameToDuplicate)
+            listOfSampsToDuplicate.append(tuple(sampToDuplicate))
+
+    for printPdf in listOfSampsToDuplicate:
+        print(printPdf)
+    
+    for tupleOfSamples in listOfSampsToDuplicate:
+        sampToDuplicateFrom = tupleOfSamples[0]
+        for i in tupleOfSamples:
+            if i == sampToDuplicateFrom:
+                continue
+            else:
+                shutil.copy(sampToDuplicateFrom, i)
+        os.remove(sampToDuplicateFrom)
+
+    return
 
 def buildDBSadNoises():
     fullOrdersDirectory = gv.sortingDir + '**/Full/*.pdf' 
@@ -637,6 +672,7 @@ def sortDownloadedOrders():
     findJSONs()
     reportDuplicatePDFs()
     splitMultiPagePDFs()
+    checkForMultiQtySamplePdfs(glob.glob(gv.downloadDir + '*-Samp-*.pdf'))
     sortPDFsByDetails()
     buildDBSadNoises()
     return
