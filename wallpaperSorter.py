@@ -1,9 +1,12 @@
 #!usr/bin/env python
 
+from copy import copy
 from datetime import datetime
 from batchController import buildABatch
 from wallpaperSorterFunctions import moveForDueDates, transferFilesFromDrive, sortDownloadedOrders, startupChecks
 from calderaImporter import calderaBatchImporter
+from shutil import copytree, rmtree
+from wallpaperSorterVariables import calderaDir, sortingDir
 
 today = datetime.today()
 

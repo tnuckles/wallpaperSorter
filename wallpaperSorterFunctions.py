@@ -1,15 +1,15 @@
 #!usr/bin/env python
 
 import zipfile as zf
-from batchCreate import tryToMovePDF
 import getPdfData as getPdf
+from batchCreate import tryToMovePDF
 import wallpaperSorterVariables as gv
 import os, shutil, math, datetime, time, json, glob, pikepdf
 
 from pathlib import Path
+from macos_tags import get_all as checkTags
 from datetime import date, timedelta, datetime
 from add_macos_tag import apply_tag as applyTag
-from macos_tags import get_all as checkTags
 
 today = date.today()
 ### Definitions

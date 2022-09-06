@@ -60,6 +60,8 @@ def createBatchFolderAndMovePdfs(currentBatchDict): # Creates a new batch folder
     batchPriority = currentBatchDict['batchDetails']['priority']
     batchMaterial = currentBatchDict['batchDetails']['material']
     batchLength = currentBatchDict['batchDetails']['length']
+    if (str(batchLength).endswith('.0')) or (str(batchLength).endswith('.5')):
+        batchLength = str(batchLength) + '0'
     materialLength = currentBatchDict['batchDetails']['materialLength']
     tag = 'Hotfolder'
     
@@ -246,13 +248,13 @@ def batchLoopController(dueDate, fullOrSamp, currentBatchDict, availablePdfs): #
         currentBatchDict[dueDate][fullOrSamp] = batchLoopFull(currentBatchDict['batchDetails'], currentBatchDict[dueDate][fullOrSamp], availablePdfs[dueDate][fullOrSamp]['batchList'])
         currentBatchDict['batchDetails']['length'] += currentBatchDict[dueDate][fullOrSamp]['batchLength']
         if len(currentBatchDict[dueDate][fullOrSamp]['batchList']) > 0:
-            currentBatchDict[dueDate][fullOrSamp]['batchList'].append(currentBatchDict[dueDate][fullOrSamp]['header'])
+            currentBatchDict[dueDate][fullOrSamp]['batchList'].append(currentBatchDict[dueDate][fullOrSamp]['header'].split('.pdf')[0] + '-full.pdf')
             currentBatchDict['batchDetails']['length'] += 1.75
     else:
         currentBatchDict[dueDate][fullOrSamp] = batchLoopSample(currentBatchDict['batchDetails'], currentBatchDict[dueDate][fullOrSamp], availablePdfs[dueDate][fullOrSamp]['batchList'])
         currentBatchDict['batchDetails']['length'] += currentBatchDict[dueDate][fullOrSamp]['batchLength']
         if len(currentBatchDict[dueDate][fullOrSamp]['batchList']) > 0:
-            currentBatchDict[dueDate][fullOrSamp]['batchList'].append(currentBatchDict[dueDate][fullOrSamp]['header'])
+            currentBatchDict[dueDate][fullOrSamp]['batchList'].append(currentBatchDict[dueDate][fullOrSamp]['header'].split('.pdf')[0] + '-samp.pdf')
             currentBatchDict['batchDetails']['length'] += 1.75
     return currentBatchDict
 
@@ -348,8 +350,11 @@ def batchLoopFull(batchDetailsDict, batchDateDict, availablePdfs): # loop for ad
                         oddMatchHeight = pdfHeight
     
     # Because we add a blank filler PDF for an item on the succeeding iteration, add a check for the last item in the loop.
-    if getPdf.oddOrEven(batchList[-1]) == 1:
-        batchList.append(gv.getBlankPanel[str(getPdf.height(batchList[-1]))].replace('999999999', getPdf.orderNumber(batchList[-1]))) 
+    try:
+        if getPdf.oddOrEven(batchList[-1]) == 1:
+            batchList.append(gv.getBlankPanel[str(getPdf.height(batchList[-1]))].replace('999999999', getPdf.orderNumber(batchList[-1]))) 
+    except:
+        pass
 
     batchDateDict['batchList'] = batchList
     batchDateDict['batchLength'] = currentSectionLength
