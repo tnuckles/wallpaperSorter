@@ -207,14 +207,26 @@ def importToCaldera(batch): # takes a batch as a file path and loops through its
     batch = hotfoldersDir + printerToUse + 'z_Currently Importing ' + batchMaterial + '/' + batch + '/'
     
     #globs of ALL batch lists
+    # allBatchLists = (
+    #     sortSamplesForCutting((glob.glob(batch + '4 - Future/Samples/*.pdf', recursive=True))),
+    #     (glob.glob(batch + '4 - Future/Full/*.pdf', recursive=True)),
+    #     sortSamplesForCutting((glob.glob(batch + '3 - Today/Samples/*.pdf', recursive=True))),
+    #     (glob.glob(batch + '3 - Today/Full/*.pdf', recursive=True)),
+    #     sortSamplesForCutting((glob.glob(batch + '2 - Late/Samples/*.pdf', recursive=True))),
+    #     (glob.glob(batch + '2 - Late/Full/*.pdf', recursive=True)),
+    #     sortSamplesForCutting((glob.glob(batch + '1 - OT/Samples/*.pdf', recursive=True))),
+    #     (glob.glob(batch + '1 - OT/Full/*.pdf', recursive=True)),
+    #     (glob.glob(batch + '5 - Utility/*.pdf', recursive=True)),
+    # )
+
     allBatchLists = (
-        sortSamplesForCutting((glob.glob(batch + '4 - Future/Samples/*.pdf', recursive=True))),
+        ((glob.glob(batch + '4 - Future/Samples/*.pdf', recursive=True))),
         (glob.glob(batch + '4 - Future/Full/*.pdf', recursive=True)),
-        sortSamplesForCutting((glob.glob(batch + '3 - Today/Samples/*.pdf', recursive=True))),
+        ((glob.glob(batch + '3 - Today/Samples/*.pdf', recursive=True))),
         (glob.glob(batch + '3 - Today/Full/*.pdf', recursive=True)),
-        sortSamplesForCutting((glob.glob(batch + '2 - Late/Samples/*.pdf', recursive=True))),
+        ((glob.glob(batch + '2 - Late/Samples/*.pdf', recursive=True))),
         (glob.glob(batch + '2 - Late/Full/*.pdf', recursive=True)),
-        sortSamplesForCutting((glob.glob(batch + '1 - OT/Samples/*.pdf', recursive=True))),
+        ((glob.glob(batch + '1 - OT/Samples/*.pdf', recursive=True))),
         (glob.glob(batch + '1 - OT/Full/*.pdf', recursive=True)),
         (glob.glob(batch + '5 - Utility/*.pdf', recursive=True)),
     )

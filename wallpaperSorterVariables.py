@@ -32,6 +32,7 @@ getBlankPanel = {
     '124.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 10Foot-L124.75-W25-H124.25.pdf',
     '136.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 11Foot-L136.75-W25-H136.25.pdf',
     '146.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 12Foot-L146.75-W25-H146.25.pdf',
+    '9.0': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Samp-Rp 2-Qty 1-BlankPdf Sample-L9.5-W25-H9.pdf',
 }
 
 getUtilityFiles = {

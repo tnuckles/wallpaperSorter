@@ -121,16 +121,9 @@ def createBatchFolderAndMovePdfs(currentBatchDict): # Creates a new batch folder
                     copy(printPdf, batchPriorityDict[batchPriorityCounter]) #this should copy over the header very last
     batchPriorityCounter = 0
 
-    # after moving items, iterate through full orders and split any that are >2 repeat.
-    for printPdf in glob.glob(batchDirectory + '/*.pdf'):
-        if getPdf.repeat(printPdf) > 2:
-            try:
-                pdfSplitter.cropMultiPanelPDFs(printPdf, batchDirectory + '/Full')
-            except utils.PdfReadError:
-                print('| Couldn\'t split file. In case it\'s needed, a copy of the original file is in "#Past Orders/Original Files"')
-                print('| PDF:', getPdf.friendlyName(printPdf))
-                tag = 'Manual'
-
+    # after moving items, iterate through full orders and split any that are >2 repeat. If anything isn't cropped, it returns the manual tag.
+    tag = splitFullPdfs(batchDirectory)
+ 
     # Check if a color guide or roll stickers needs to be added, then add them.
     if currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'] != '':
         copy(currentBatchDict['batchDetails']['colorGuides']['default'], batchDirectory + currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'])
@@ -142,6 +135,29 @@ def createBatchFolderAndMovePdfs(currentBatchDict): # Creates a new batch folder
     removeEmptyDirectories(batchDirectory)
 
     return
+
+def splitFullPdfs(batchDirectory):
+    dirsToLoopThrough = [
+        '/1 - OT',
+        '/2 - Late',
+        '/3 - Today',
+        '/4 - Future',
+    ]
+    tag = 'Hotfolder'
+
+    for dueDate in dirsToLoopThrough:
+        for printPdf in glob.glob(batchDirectory + dueDate + '/Full/*.pdf', recursive=True):
+            if '999999999' in printPdf:
+                continue
+            if getPdf.repeat(printPdf) > 2:
+                try:
+                    pdfSplitter.cropMultiPanelPDFs(printPdf, batchDirectory + dueDate + '/Full')
+                except utils.PdfReadError:
+                    print('| Couldn\'t split file. In case it\'s needed, a copy of the original file is in "#Past Orders/Original Files"')
+                    print('| PDF:', getPdf.friendlyName(printPdf))
+                    tag = 'Manual'
+    
+    return tag
 
 def addColorGuides(currentBatchDict): # check if the total length can fit color guides or roll stickers, and add them appropriately
     batchMaterial = currentBatchDict['batchDetails']['material']
@@ -296,6 +312,9 @@ def batchLoopSample(batchDetailsDict, batchDateDict, availablePdfs): # loop for 
 
     # calculate length to add to the current batch. Take the number of samples and divide it by two, rounded down, for the number of full rows. Then take the number of samples mod 2 to see if there's a single sample row. Add the two together, then multiply by 9.5 for length.
     lengthToAdd = (floor(samplesAdded/2) + (samplesAdded%2))*9.5
+
+    if len(batchList) % 2 == 1:
+        batchList.append(gv.getBlankPanel[str(getPdf.height(batchList[-1]))].replace('999999999', getPdf.orderNumber(batchList[-1]))) 
 
     batchDateDict['batchList'] = batchList
     batchDateDict['batchLength'] = lengthToAdd
