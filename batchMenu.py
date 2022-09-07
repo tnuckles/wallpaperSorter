@@ -13,7 +13,11 @@ def confirmBatchMenu(material, length): # Menu to Confirm Batch Details. Calls b
         (2, 'No'),
     )
     validOptions = populateValidOptions(menuOptions)
-    print('\n| Confirm: Batch', length, 'feet of', material, 'PDFs?')
+    
+    displayLength = length
+    if displayLength > 500:
+        displayLength = int(length/12+6)
+    print('\n| Confirm: Batch', str(displayLength), 'feet of', material, 'PDFs?')
     printMenuOptions(menuOptions)
     command = menuOptions[(getInput(validOptions)-1)]
     if command == menuOptions[1]:
@@ -83,10 +87,10 @@ def printMenuOptions(listOfMenuOptions): #takes a list of menu items and prints 
 
 def batchDetailsMenu(): # Menu to get the main details of a new batch. Returns a dictionary containing the material, material length, and minimum length. Calls populateValidOptions to properly display valid menu options. Calls getInput to get and verify user input. Calls getBatchLength to ask the user for a batch length if a default one is not chosen.
     menuOptions = (
-        (1, 'Smooth, 150 Feet', 'Smooth', 145, True),
-        (2, 'Woven, 100 Feet', 'Woven', 95, True),
-        (3, 'Smooth, 150 Feet, Disregard Minimum Length', 'Smooth', 145, False),
-        (4, 'Woven, 100 Feet, Disregard Minimum Length', 'Woven', 95, False),
+        (1, 'Smooth, 150 Feet', 'Smooth', gv.dirLookupDict['MaterialLength']['Smooth'], True),
+        (2, 'Woven, 100 Feet', 'Woven', gv.dirLookupDict['MaterialLength']['Woven'], True),
+        (3, 'Smooth, 150 Feet, Disregard Minimum Length', 'Smooth', gv.dirLookupDict['MaterialLength']['Smooth'], False),
+        (4, 'Woven, 100 Feet, Disregard Minimum Length', 'Woven', gv.dirLookupDict['MaterialLength']['Woven'], False),
         (5, 'Smooth, Custom Length, Disregard Minimum Length', 'Smooth', 0, False),
         (6, 'Woven, Custom Length, Disregard Minimum Length', 'Woven', 0, False),
         (7, 'Quit and return to Main Menu', 'Smooth', 0, True)
@@ -104,7 +108,7 @@ def batchDetailsMenu(): # Menu to get the main details of a new batch. Returns a
    
     batchDetails = {
         'material':command[2],
-        'materialLength':command[3] * 12,
+        'materialLength':command[3],
         'minLength':command[4]
     }
     if batchDetails['materialLength'] == 0:

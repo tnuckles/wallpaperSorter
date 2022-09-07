@@ -15,7 +15,7 @@ currentBatchDict = {
             'ID':'',
             'material':'',
             'priority':0,
-            'length':0,
+            'length':2,
             'materialLength':0,
             'careAboutminLength':True,
             'includeOTs':False,
@@ -148,8 +148,6 @@ def buildABatch(): # Begins the batch building process
     
     #variables of the currentBatchDict for easy reference
     material = currentBatchDict['batchDetails']['material']
-    includeOTs = currentBatchDict['batchDetails']['includeOTs']
-    materialLength = batchDetails['materialLength']
     minBatchLength = batchDetails['materialLength'] * minLength
 
     # gets available print PDFs
@@ -167,27 +165,6 @@ def buildABatch(): # Begins the batch building process
     return resetDicts()
     
 
-    #checks for orders that need to be printed
-    '''
-    Are there [OT] orders?
-    How many [OT] orders are there?
-    How many are sample orders?
-        How long are they?
-        Will the samples take up more than 20% of the total batch length?
-            If they will take up less than 30%, add them all to the batch
-            Otherwise, only add in enough to take up 20% of the batch.
-        Recalculate batch length
-    How many are full orders?
-        Sort them by length. 
-        How long will they be?
-            By default, full orders should comprise 80% of the order (unless overriden by the sample logic above)
-            If the total length of [OT] orders is less than the remaining length, add them all in.
-            Otherwise, add in enough OT orders to meet, but not exceed, the remaining length.
-        Recalculate batch length.
-    
-    Add in reverse order - OT should be added last, then Late, then Today, then Future.
-    '''
-
 def otCheck(material):
     otFullCount = len(getPdfGlob('OT', material, 'full'))
     otSampCount = len(getPdfGlob('OT', material, 'Sample'))
@@ -204,7 +181,6 @@ def checkminLength(material, minBatchLength):
     todayLength = availablePdfs['Today']['full']['batchLength'] + availablePdfs['Today']['sample']['batchLength']
     futureLength = availablePdfs['Future']['full']['batchLength'] + availablePdfs['Future']['sample']['batchLength']
     potentialBatchLength = otLength + lateLength + todayLength + futureLength
-    #potentialBatchLength = sortPdfs(getPdfGlob('all', material, 'all'))
     if potentialBatchLength < minBatchLength:
         print('| Not enough', material, 'PDFs to fill up 80' + "% " + 'of a roll.')
         return buildABatch()
@@ -248,7 +224,7 @@ def resetCurrentBatchDict(): # sets currentBatchDict to default/empty values.
             'ID':'',
             'material':'',
             'priority':0,
-            'length':0,
+            'length':2,
             'materialLength':0,
             'careAboutminLength':True,
             'includeOTs':False,
@@ -362,5 +338,3 @@ def resetAvailablePdfs():
     }
 
     return availablePdfs
-
-#buildABatch()
