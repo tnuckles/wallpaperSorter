@@ -13,7 +13,11 @@ def confirmBatchMenu(material, length): # Menu to Confirm Batch Details. Calls b
         (2, 'No'),
     )
     validOptions = populateValidOptions(menuOptions)
-    print('\n| Confirm: Batch', length, 'feet of', material, 'PDFs?')
+    
+    displayLength = length
+    if displayLength > 500:
+        displayLength = int(length/12+6)
+    print('\n| Confirm: Batch', str(displayLength), 'feet of', material, 'PDFs?')
     printMenuOptions(menuOptions)
     command = menuOptions[(getInput(validOptions)-1)]
     if command == menuOptions[1]:
@@ -104,7 +108,7 @@ def batchDetailsMenu(): # Menu to get the main details of a new batch. Returns a
    
     batchDetails = {
         'material':command[2],
-        'materialLength':command[3] * 12,
+        'materialLength':command[3],
         'minLength':command[4]
     }
     if batchDetails['materialLength'] == 0:
