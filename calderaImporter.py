@@ -79,7 +79,20 @@ def batchSelector(listOfBatches): #takes a list of batches. Sorts them by priori
     # populates menu for batch selecting. When the user provides a number, we do interval comparison to see which list it should be from. After decided, we subtract one from the user's input to align it to the list, then subtract the length of the previous list to make the user's input align properly with a python list.
     # Then return the batch
     print('\n| Which batch would you like to move?')
-    command = int(input('| Command > '))
+    command = input('| Command > ')
+
+    # Validate Input
+    try:
+        command = int(command)
+    except:
+        print('| Please enter a number.')
+        wait(1.5)
+        return batchSelector(listOfBatches)
+    if command > listOptionCounter-1 or command < 1:
+        print('| Not a valid choice.')
+        wait(1.5)
+        return batchSelector(listOfBatches)
+    
     if command <= otListStop:
         command -= 1
         batch = otBatchList[command]
