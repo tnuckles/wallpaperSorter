@@ -231,15 +231,6 @@ def importToCaldera(batch): # takes a batch as a file path and loops through its
         (glob.glob(batch + '5 - Utility/*.pdf', recursive=True)),
     )
 
-    # for pdfList in allBatchLists:
-    #     try:
-    #         for printPdf in pdfList:
-    #             batchList.append(printPdf)
-    #     except TypeError:
-    #         pass
-    
-    #moveToHotfolder(batchList, receivingHotfolder)
-
     for pdfList in allBatchLists:
         try:
             moveToHotfolder(pdfList, receivingHotfolder)
@@ -368,63 +359,3 @@ def sortBatchesByID(batchList): # takes a list of pathsToBatches and sorts them 
     batchList = sortedList
     sortedList = []
     return batchList
-
-# def mainMenu():
-#     menuOptions = (
-#         (1, 'Sort Orders', sortDownloadedOrders),
-#         (2, 'Batch Orders', batchCreationController),
-#         (3, 'Caldera Batch Importer', calderaBatchImporter),
-#         (4, 'Download Orders from Google Drive', transferFilesFromDrive),
-#         (5, 'Update Sorting Based on Due Dates', moveForDueDates),
-#         ('Q', 'Quit'),
-#     )
-
-#     validOptions = populateValidOptions(menuOptions)
-
-#     print ('| Please enter an option: ')
-#     printMenuOptions(menuOptions)
-
-#     command = menuOptions[(getInput(validOptions)-1)]
-
-#     if command[0] == 'Q':
-#         print('\n| Job\'s done!')
-#         return False
-
-#     return command[2]()
-
-# def populateValidOptions(menuOptions): # Gathers valid options from menus (like batchDetailsMenu) and ensures they are valid
-#     validOptions = []
-#     for option in menuOptions:
-#         validOptions.append(option[0])
-#     return validOptions
-
-# def printMenuOptions(listOfMenuOptions): #takes a list of menu items and prints them out neatly. See below for format.
-#     # (1, Smooth)
-#     # (int for valid option, displayed menu option)
-#     # Will display like: (1) Smooth
-#     for option in listOfMenuOptions:
-#         print('|  (' + str(option[0]) + ')', option[1],)
-
-# def getInput(validOptionsList): # Prompts user for input and validates it against valid options. Should be reusable for all types of menus that match the batchDetailsMenu style.
-#     command = input('\n| Command > ')
-#     try:
-#         command = int(command)
-#     except ValueError:
-#         print('\n| Please enter a valid number')
-#         return getInput(validOptionsList)
-#     while command not in validOptionsList:
-#         print('\n| Not a valid choice.')
-#         return getInput(validOptionsList)
-#     return command
-
-# def main():
-#     while True:
-#         mainMenu()
-#     return
-
-# try:
-#     startupChecks()
-# except:
-#     pass
-
-# main()
