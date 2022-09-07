@@ -3,6 +3,7 @@
 import os, shutil, math, datetime, glob
 from PyPDF2 import utils
 from datetime import  datetime
+from batchCreation import getListOfPdfs
 
 
 import wallpaperSorterVariables as gv
@@ -12,26 +13,196 @@ import add_macos_tag as set_tag
 
 today = datetime.today()
 
-# Definitions
+### Psuedo Code
+'''
+Get current count of all PDFs in Sorted For Print
+Display current count
+Display menu of possible options:
+    Smooth, 150 Feet
+    Woven, 100 Feet
+    Smooth, 150 Feet, Disregard minimum length
+    Woven, 100 Feet, Disregard minimum batch length
+    Smooth, Custom Length
+    Woven, Custom Length
+Start batch based on selected method:
+    Look at each due date individually:
+        Get total length of all full panels items IF they were batched together nicely to optimize space
+            If total length > roll length, optimized batch based on that space, then start over.
+            Otherwise: Batch all available Items
+            Recalculate leftover Length
+        Repeat for OT samples
+            
+'''
 
-def batchCreationController():
-    material, material_length, care_about_length = getMaterialAndRollLength()
-    full_pdfs_to_batch, samplePdfsToBatch = getListOfPdfs(material)
-    sort_pdfs_by_length(full_pdfs_to_batch)
-    total_full_length, total_sample_length = getTotalLengthOfPdfs(full_pdfs_to_batch, samplePdfsToBatch)
-    if care_about_length == True:
-        if (total_full_length + total_sample_length) > ((material_length * .8)):
-            length_for_full = decide_full_sample_split(total_full_length, total_sample_length, material_length)
-            new_batch_dict = build_batch_list(material_length, length_for_full, full_pdfs_to_batch, samplePdfsToBatch, total_sample_length)
-            make_batch_folder(new_batch_dict, material)
-        else:
+### New Variables
+
+batchHeaderDict = {
+    'OT':'/Volumes/GoogleDrive/Shared drives/\# Production/Trevor Scripts/wallpaperSorter/images/1-Qty 2-OT Header.pdf',
+    'Late':'/Volumes/GoogleDrive/Shared drives/\# Production/Trevor Scripts/wallpaperSorter/images/2-Qty 2-Late Header.pdf',
+    'Today':'/Volumes/GoogleDrive/Shared drives/\# Production/Trevor Scripts/wallpaperSorter/images/3-Qty 2-Today Header.pdf',
+    'Future':'/Volumes/GoogleDrive/Shared drives/\# Production/Trevor Scripts/wallpaperSorter/images/4-Qty 2-Future Header.pdf',
+}
+
+### New Definitions
+
+def getPdfGlob(dueDate, material, fullOrSamp):
+    dueDateLookup = {
+        'OT':'1 - OT Orders/',
+        'Late':'2 - Late/',
+        'Today':'3 - Today/',
+        'Future':'4 - Future/',
+    }
+    material = gv.dirLookupDict[material]
+    if fullOrSamp.lower() == 'full':
+        fullOrSamp = 'Full/**/*.pdf'
+    else:
+        fullOrSamp = 'Sample/*.pdf'
+
+    return glob.glob(gv.sortingDir + dueDateLookup[dueDate] + material + fullOrSamp, recursive=True)
+
+def getCountOfPrintPdfs(material, fullOrSamp): # uses Glob to get a count of all print pdfs in their respective folders
+    pdfCount = {
+        'OT': len(getPdfGlob('OT',material,fullOrSamp)),
+        'Late': len(getPdfGlob('Late',material,fullOrSamp)),
+        'Today': len(getPdfGlob('Today',material,fullOrSamp)),
+        'Future': len(getPdfGlob('Future',material,fullOrSamp)),
+    }
+    return pdfCount
+
+def getListOfPrintPdfs(material, fullOrSamp): # uses Glob to get a count of all print pdfs in their respective folders
+    pdfList = {
+        'OT': getPdfGlob('OT',material,fullOrSamp),
+        'Late': getPdfGlob('Late',material,fullOrSamp),
+        'Today': getPdfGlob('Today',material,fullOrSamp),
+        'Future': getPdfGlob('Future',material,fullOrSamp),
+    }
+    return pdfList
+
+def printPdfCounts(): # uses getCountOfPrintPdfs to get a count of print pdfs, then neatly prints them
+    printPdfCountDict = {
+        'smooth': {
+            'full' : ('Smooth', 'Full', getCountOfPrintPdfs('Smooth', 'full')),
+            'sample' : ('Smooth', 'Sample', getCountOfPrintPdfs('Smooth', 'sample')),
+        }, 
+        'woven': {
+            'full' : ('Woven', 'Full', getCountOfPrintPdfs('Woven', 'full')),
+            'sample' : ('Woven', 'Sample', getCountOfPrintPdfs('Woven', 'sample')),
+        },  
+    }
+    print()
+    for material in printPdfCountDict:
+        print()
+        for orderSize in printPdfCountDict[material]:
+            variableName = printPdfCountDict[material][orderSize]
+            print('|', variableName[1], variableName[0] + ': ', variableName[2])
+
+def batchCreationController(): #controls batching functions
+    printPdfCounts()
+    material, materialLength, careAboutLength = getMaterialAndRollLength() 
+    if careAboutLength == True:
+        fullPdfsToBatch = getListOfPrintPdfs(material, 'full')
+        samplePdfsToBatch = getListOfPrintPdfs(material, 'sample')
+        total_full_length, total_sample_length = getTotalLengthOfPdfs(fullPdfsToBatch, samplePdfsToBatch)
+        if (total_full_length + total_sample_length < (materialLength * .8)):
             print('| Remaining PDFs will not fill more than 80' + "%" + ' of a roll. Waiting for new orders to make a batch.')
-    elif care_about_length == False:
-        length_for_full = decide_full_sample_split(total_full_length, total_sample_length, material_length)
-        new_batch_dict = build_batch_list(material_length, length_for_full, full_pdfs_to_batch, samplePdfsToBatch, total_sample_length)
-        make_batch_folder(new_batch_dict, material)
+            return batchCreationController()
+    return buildBatch(material, materialLength)
+
+def buildBatch(material, materialLength):
     
-    return batchCreationController()
+    currentBatchDict = {
+        'batchDetails': {
+            'ID':getBatchID(),
+            'material':material,
+            'priority':0,
+            'materialLenth':0,
+            'batchLength':0
+        },
+        'OT':{
+            'full':{
+                'batchLength':0,
+                'batchList':[],
+            },
+            'sample':{
+                'batchLength':0,
+                'batchList':[],
+            },
+        },
+        'Late':{
+            'full':{
+                'batchLength':0,
+                'batchList':[],
+            },
+            'sample':{
+                'batchLength':0,
+                'batchList':[],
+            },
+        },
+        'Today':{
+            'full':{
+                'batchLength':0,
+                'batchList':[],
+            },
+            'sample':{
+                'batchLength':0,
+                'batchList':[],
+            },
+        },
+        'Future':{
+            'full':{
+                'batchLength':0,
+                'batchList':[],
+            },
+            'sample':{
+                'batchLength':0,
+                'batchList':[],
+            },
+        },
+    }
+
+
+    while currentBatchDict['batchDetails']['length'] < materialLength:
+        if getPdfGlob('OT', material, 'full') > 0:
+            checkOrdersByDueDate('OT', material, 'full')
+        if getPdfGlob('OT', material, 'sample') > 0: 
+            checkOrdersByDueDate('OT', material, 'sample')
+        if getPdfGlob('Late', material, 'full') > 0: 
+            checkOrdersByDueDate('Late', material, 'full')
+        if getPdfGlob('Late', material, 'sample') > 0: 
+            checkOrdersByDueDate('Late', material, 'sample')
+        if getPdfGlob('Today', material, 'full') > 0: 
+            checkOrdersByDueDate('Today', material, 'full')
+        if getPdfGlob('Today', material, 'sample') > 0: 
+            checkOrdersByDueDate('Today', material, 'sample')
+        if getPdfGlob('Future', material, 'full') > 0: 
+            checkOrdersByDueDate('Future', material, 'full')
+        if getPdfGlob('Future', material, 'sample') > 0: 
+            checkOrdersByDueDate('Future', material, 'sample')
+
+
+def checkOrdersByDueDate(dueDate, material, fullOrSamp, currentBatchList):
+    batchList = {
+            'full':{
+                'batchLength':0,
+                'batchList':[],
+            },
+            'sample':{
+                'batchLength':0,
+                'batchList':[],
+            },
+        }
+    if getPdfGlob(dueDate, material, fullOrSamp) > 0:
+        pdfList = getListOfPrintPdfs(material,fullOrSamp)[dueDate]
+        pdfList = sortPdfsByLength(pdfList)
+        
+
+    else:
+        return
+
+def getBatchID():
+    currentID = gv.globalBatchCounter['batchCounter']
+    gv.globalBatchCounter['batchCounter'] += 1
+    return currentID
 
 def getMaterialAndRollLength():
     options = 1,2,3,4,5,6
@@ -102,7 +273,7 @@ def confirmBatch(material, length):
     print('| 1. Yes')
     print('| 2. No')
     try:
-        command = int(input('| Command > '))
+        command = int(input('\n| Command > '))
     except ValueError:
         print('\n| Please enter a number, not text.')
         return confirmBatch(material, length)
@@ -114,23 +285,114 @@ def confirmBatch(material, length):
     elif command == 2:
         return False
 
-def getListOfPdfs(material):
-    pdf_material = gv.dirLookupDict[material]
-    fullPdfsToBatch = {
-        'OTOrders' : glob.glob(gv.sortingDir + '1 - OT Orders/' + pdf_material + 'Full/**/*.pdf', recursive=True),
-        'lateOrders' : glob.glob(gv.sortingDir + '2 - Late/' + pdf_material + 'Full/**/*.pdf', recursive=True),
-        'todayOrders' : glob.glob(gv.sortingDir + '3 - Today/' + pdf_material + 'Full/**/*.pdf', recursive=True),
-        'futureOrders' : glob.glob(gv.sortingDir + '4 - Future/' + pdf_material + 'Full/**/*.pdf', recursive=True),
-        }
-    samplePdfsToBatch = {
-        'OTOrders' : glob.glob(gv.sortingDir + '1 - OT Orders/' + pdf_material + 'Sample/*.pdf', recursive=True),
-        'lateOrders' : glob.glob(gv.sortingDir + '2 - Late/' + pdf_material + 'Sample/*.pdf', recursive=True),
-        'todayOrders' : glob.glob(gv.sortingDir + '3 - Today/' + pdf_material + 'Sample/*.pdf', recursive=True),
-        'futureOrders' : glob.glob(gv.sortingDir + '4 - Future/' + pdf_material + 'Sample/*.pdf', recursive=True),
-        }
-    return fullPdfsToBatch, samplePdfsToBatch
 
-def sort_pdfs_by_length(pdf_array):
+
+
+# Definitions
+
+#def batchCreationController():
+#    print
+#    material, material_length, care_about_length = getMaterialAndRollLength()
+#    fullPdfsToBatch, samplePdfsToBatch = getListOfPdfs(material)
+#    sortPdfsByLength(fullPdfsToBatch)
+#    total_full_length, total_sample_length = getTotalLengthOfPdfs(fullPdfsToBatch, samplePdfsToBatch)
+#    if care_about_length == True:
+#        if (total_full_length + total_sample_length) > ((material_length * .8)):
+#            length_for_full = decide_full_sample_split(total_full_length, total_sample_length, material_length)
+#            new_batch_dict = build_batch_list(material_length, length_for_full, fullPdfsToBatch, samplePdfsToBatch, total_sample_length)
+#            make_batch_folder(new_batch_dict, material)
+#        else:
+#            print('| Remaning PDFs will not fill more than 80' + "%" + ' of a roll. Waiting for new orders to make a batch.')
+#    elif care_about_length == False:
+#        length_for_full = decide_full_sample_split(total_full_length, total_sample_length, material_length)
+#        new_batch_dict = build_batch_list(material_length, length_for_full, fullPdfsToBatch, samplePdfsToBatch, total_sample_length)
+#        make_batch_folder(new_batch_dict, material)
+#    
+#    return batchCreationController()
+
+#def getMaterialAndRollLength():
+#    options = 1,2,3,4,5,6
+#    print('\n| Specify material and roll length:')
+#    print('| 1. Smooth, 150 Feet')
+#    print('| 2. Woven, 100 Feet')
+#    print('| 3. Smooth, 150 Feet, Disregard Minimum Length')
+#    print('| 4. Woven, 100 Feet, Disregard Minimum Length')
+#    print('| 5. Smooth, Custom Length, Disregard Minimum Length')
+#    print('| 6. Woven, Custom Length, Disregard Minimum Length')
+#    try:
+#        command = int(input('\n| Command > '))
+#    except ValueError:
+#        print('\n| Please enter a whole number, not text.')
+#    while int(command) not in options:
+#        print('\n| Not a valid choice.')
+#        return getMaterialAndRollLength()
+#    if command == 1:
+#        confirm = confirmBatch('Smooth', 144)
+#        if confirm == True:
+#            return 'Smooth', 144*12, True
+#        else:
+#            return getMaterialAndRollLength()
+#    elif command == 2:
+#        confirm = confirmBatch('Woven', 94)
+#        if confirm == True:
+#            return 'Woven', 94*12, True
+#        else:
+#            return getMaterialAndRollLength()
+#    elif command == 3:
+#        confirm = confirmBatch('Smooth', 144)
+#        if confirm:
+#            return 'Smooth', 144*12, False
+#        else:
+#            return getMaterialAndRollLength()
+#    elif command == 4:
+#        confirm = confirmBatch('Woven', 94)
+#        if confirm:
+#            return 'Woven', 94*12, False
+#        else:
+#            return getMaterialAndRollLength()
+#    elif command == 5:
+#        try:
+#            length = int(input('\n| Please enter your Smooth length in feet > '))
+#        except ValueError:
+#            print('| Invalid input.')
+#            return getMaterialAndRollLength()
+#        confirm = confirmBatch('Smooth', length)
+#        if confirm == True:
+#            return 'Smooth', length, False
+#        else:
+#            return getMaterialAndRollLength()
+#    elif command == 6:
+#        try:
+#            length = int(input('\n| Please enter your Woven length in feet > '))
+#        except ValueError:
+#            print('| Invalid input.')
+#            return getMaterialAndRollLength()
+#        confirm = confirmBatch('Woven', length)
+#        if confirm == True:
+#            return 'Woven', length, False
+#        else:
+#            return getMaterialAndRollLength()
+
+
+# def confirmBatch(material, length):
+#     options = 1,2
+#     print('\n| Confirm: Batch', length, 'feet of', material, 'PDFs?')
+#     print('| 1. Yes')
+#     print('| 2. No')
+#     try:
+#         command = int(input('\n| Command > '))
+#     except ValueError:
+#         print('\n| Please enter a number, not text.')
+#         return confirmBatch(material, length)
+#     while int(command) not in options:
+#         print('\n| Not a valid choice.')
+#         return confirmBatch(material, length)
+#     if command == 1:
+#         return True
+#     elif command == 2:
+#         return False
+
+def sortPdfsByLength(pdf_array):
     for due_date in pdf_array:
         list_to_sort = []
         sorted_list = []
@@ -208,7 +470,7 @@ def tryToMovePDF(printPDF, BatchDir, friendlyPdfName):
         print('|> Path:', printPDF)
         return
 
-def build_batch_list(material_length, length_for_full, full_pdfs_to_batch, samplePdfsToBatch, total_sample_length):
+def build_batch_list(material_length, length_for_full, fullPdfsToBatch, samplePdfsToBatch, total_sample_length):
     new_batch = {
         'list_of_pdfs': [],
         'batch_length': 0
@@ -224,8 +486,8 @@ def build_batch_list(material_length, length_for_full, full_pdfs_to_batch, sampl
     loop_counter = 0
 
     while (batch_length < length_for_full) and (loop_counter == 0):
-        for due_date in full_pdfs_to_batch:
-            for print_pdf in full_pdfs_to_batch[due_date]:
+        for due_date in fullPdfsToBatch:
+            for print_pdf in fullPdfsToBatch[due_date]:
                 pdf_length = getPdf.length(print_pdf)
                 pdf_odd_or_even = getPdf.oddOrEven(print_pdf)
                 pdf_height = getPdf.height(print_pdf)

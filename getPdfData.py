@@ -18,7 +18,6 @@ def orderItem(pdf):
     return name(pdf).split('-')[1]
 
 def dueDate(pdf):
-    #return datetime.date(datetime.strptime(name(pdf).split('(')[1].split(')')[0], '%Y-%m-%d'))
     fileName = name(pdf)
     return datetime.date(datetime.strptime(fileName.split('(')[1].split(')')[0], '%Y-%m-%d')) 
 
@@ -59,7 +58,7 @@ def width(pdf):
 def height(pdf):
     return float(name(pdf).split('-')[13].split('H')[1])
 
-def calculate_length(quantity, height):
+def calculateLength(quantity, height):
     quantity = int(quantity)
     height = float(height)
 
@@ -69,3 +68,19 @@ def calculate_length(quantity, height):
     length = second * third
     return length
 
+def getAll(pdf):
+    pdfDict = {
+        'orderNumber': orderNumber(pdf),
+        'orderItem': orderItem(pdf),
+        'dueDate': dueDate(pdf),
+        'shipMethod': shipMethod(pdf),
+        'material': material(pdf),
+        'orderSize': size(pdf),
+        'orderRepeat': repeat(pdf),
+        'orderQuantity': quantity(pdf),
+        'templateName': templateName(pdf),
+        'orderLength': length(pdf),
+        'orderWidth': width(pdf),
+        'orderHeight': height(pdf),
+    }
+    return pdfDict
