@@ -1,6 +1,5 @@
 #!usr/bin/env python
 
-from distutils import util
 import glob
 from shutil import move, rmtree
 from datetime import datetime
