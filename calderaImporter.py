@@ -191,7 +191,7 @@ def importToCaldera(batch): # takes a batch as a file path and loops through its
     print('| Batch:', batch.split('/')[-1])
 
     # get printer to use    
-    printerToUse = getPrinter()
+    printerToUse = getPrinter(batch.split('/')[-1].split(' ')[2])
 
     # get material type for currently importing hotfolder
     batchMaterial = batch.split('/')[-1].split(' ')[2]
@@ -239,18 +239,18 @@ def importToCaldera(batch): # takes a batch as a file path and loops through its
     print('\n| Moved', batch.split('/')[-2], 'into', receivingHotfolder.split('/')[6].split(' ')[1], batchMaterial, 'HotFolder')
     return
 
-def getPrinter():
-    menuOptions = (
-        (1, 'Ichi'),
-        (2, 'Ni'),
-        (3, 'San'),
-    )
+def getPrinter(batchMaterial):
+    menuOptions = printerCheck(batchMaterial)
 
     validOptions = populateValidOptions(menuOptions)
     print('| Please select a printer to use: ')
     printMenuOptions(menuOptions)
 
     command = menuOptions[(getInput(validOptions)-1)][1]
+
+    if 'unavailable' in command:
+        print('\n|', command.split(' ')[0], 'already has a batch in the', batchMaterial, 'hotfolder.\n| Please export the batch before using', command.split(' ')[0] + '.\n')
+        return getPrinter(batchMaterial)
 
     printerLookup = {
         'Ichi':'1 Ichi/',
@@ -259,6 +259,28 @@ def getPrinter():
     }
 
     return printerLookup[command]
+
+def printerCheck(batchMaterial):
+    materialHotfolders = glob.glob(hotfoldersDir + '*/z_Currently Importing ' + batchMaterial + '/*')
+    unavailablePrinters = []
+    availablePrinters = ['1 Ichi', '2 Ni', '3 San']
+    revisedPrinters = []
+
+    for batch in materialHotfolders:
+        unavailablePrinters.append(batch.split('/')[-3])
+    
+    for printer in availablePrinters:
+        if printer in unavailablePrinters:
+            revisedPrinters.append(printer.split(' ')[0] + ' ' + printer.split(' ')[1] + ' is unavailable for ' + batchMaterial)
+        else:
+            revisedPrinters.append(printer)
+
+    availablePrinters = []
+
+    for printer in revisedPrinters:
+        availablePrinters.append((int(printer.split(' ')[0]), printer.split(printer.split(' ')[0] + ' ')[1]))
+    
+    return availablePrinters
 
 def sortSamplesForCutting(pdfList): #takes a list of samples, then sorts them by by every-other. That way the samples print from top to bottom instead of right to left
     if len(pdfList) == 0:
