@@ -8,7 +8,7 @@ def name(pdf):
     return pdf.split('/')[-1].split('.pdf')[0]
 
 def friendlyName(pdf):
-    friendlyPdfName = orderNumber(pdf) + ' ' +  templateName(pdf) + ' ' +  orderItem(pdf) 
+    friendlyPdfName = orderNumber(pdf) + ' ' +  orderItem(pdf) + ' ' + templateName(pdf)
     return friendlyPdfName
 
 def orderNumber(pdf):

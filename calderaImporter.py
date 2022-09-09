@@ -9,8 +9,8 @@ from shutil import move, rmtree
 from getPdfData import friendlyName
 from batchCreate import tryToMovePDF
 from datetime import datetime, timedelta
-from batchSorting import sortPdfsByOrderNumber
 from batchMenu import populateValidOptions, printMenuOptions
+from batchSorting import sortPdfsByOrderNumber, sortPdfsByOrderItemNumber, sortPdfsByHeight
 from wallpaperSorterVariables import batchFoldersDir, hotfoldersDir, pastOrdersDir, lockHotfolderBatch
 
 
@@ -262,25 +262,17 @@ def importToCaldera(batch): # takes a batch as a file path and loops through its
     # )
 
     allBatchLists = [
-        glob.glob(batch + '4 - Future/Samples/*.pdf', recursive=True),
-        glob.glob(batch + '4 - Future/Full/*.pdf', recursive=True),
-        glob.glob(batch + '3 - Today/Samples/*.pdf', recursive=True),
-        glob.glob(batch + '3 - Today/Full/*.pdf', recursive=True),
-        glob.glob(batch + '2 - Late/Samples/*.pdf', recursive=True),
-        glob.glob(batch + '2 - Late/Full/*.pdf', recursive=True),
-        glob.glob(batch + '1 - OT/Samples/*.pdf', recursive=True),
-        glob.glob(batch + '1 - OT/Full/*.pdf', recursive=True),
+        sortSamplesForCutting(sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '4 - Future/Samples/*.pdf', recursive=True)))),
+        sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '4 - Future/Full/*.pdf', recursive=True))),
+        sortSamplesForCutting(sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '3 - Today/Samples/*.pdf', recursive=True)))),
+        sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '3 - Today/Full/*.pdf', recursive=True))),
+        sortSamplesForCutting(sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '2 - Late/Samples/*.pdf', recursive=True)))),
+        sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '2 - Late/Full/*.pdf', recursive=True))),
+        sortSamplesForCutting(sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '1 - OT/Samples/*.pdf', recursive=True)))),
+        sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '1 - OT/Full/*.pdf', recursive=True))),
         glob.glob(batch + '5 - Utility/*.pdf', recursive=True),
     ]
-    if len(allBatchLists[0]) > 2:
-        allBatchLists[0] = sortPdfsByOrderNumber(allBatchLists[0])
-    if len(allBatchLists[2]) > 2:
-        allBatchLists[2] = sortPdfsByOrderNumber(allBatchLists[2])
-    if len(allBatchLists[4]) > 2:
-        allBatchLists[4] = sortPdfsByOrderNumber(allBatchLists[4])
-    if len(allBatchLists[6]) > 2:
-        allBatchLists[6] = sortPdfsByOrderNumber(allBatchLists[6])
-
+    
     for pdfList in allBatchLists:
         try:
             moveToHotfolder(pdfList, receivingHotfolder)
