@@ -101,7 +101,6 @@ def sortPdfsByLength(pdfDict): # takes a list of pathstopdfs and sorts them by l
     return pdfDict
 
 def sortPdfsByOrderNumber(pdfList): # takes a list of pathstopdfs and sorts them by orderNumber, from least to greatest.
-    # Original sort code is at the bottom.
     listToSort = []
     sortedList = []
     for printPdf in pdfList:
@@ -115,7 +114,30 @@ def sortPdfsByOrderNumber(pdfList): # takes a list of pathstopdfs and sorts them
     pdfList = sortedList
     sortedList = []
     return pdfList
-        
+
+def sortPdfsByOrderItemNumber(pdfList): # takes a list of pathstopdfs and sorts them by order item number, from least to greatest.
+    #currently not used in this file, but only called by calderaImporter. Leaving here for organization.
+    listToSort = []
+    sortedList = []
+    headerList = []
+    for printPdf in pdfList:
+        if 'header' in printPdf:
+            headerList.append(printPdf)
+        else:
+            PdfItemNumber = int(getPdf.orderItem(printPdf))
+            listToSort.append((PdfItemNumber, printPdf))
+    listToSort.sort(reverse=False, key=lambda pdf: pdf[0])
+    pdfList = listToSort
+    listToSort = []
+    for printPdf in pdfList:
+        sortedList.append(printPdf[1])
+    for printPdf in headerList:
+        sortedList.append(printPdf)
+    pdfList = sortedList
+    sortedList = []
+    return pdfList
+
+
 def combineMultiplePdfLists(pdfDict):
     sortedList = []
     for oddList in pdfDict:
