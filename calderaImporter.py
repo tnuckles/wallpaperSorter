@@ -2,13 +2,15 @@
 
 import glob
 from shutil import move, rmtree
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep as wait
-from os import mkdir, walk, listdir, rmdir
+from time import ctime
+from os import mkdir
+from os.path import getmtime
 from getPdfData import friendlyName
 from batchCreate import tryToMovePDF
 from batchMenu import populateValidOptions, printMenuOptions
-from wallpaperSorterVariables import batchFoldersDir, hotfoldersDir, pastOrdersDir
+from wallpaperSorterVariables import batchFoldersDir, hotfoldersDir, pastOrdersDir, lockHotfolderBatch
 
 
 today = datetime.today()
@@ -20,9 +22,16 @@ def calderaBatchImporter(): # main function for this module. First calls checkFo
 def checkForBatchFolders(): # checks for batch folders to import and export. If there are none, shorts the module. Otherwise, continues
     importBatchFoldersGlob = glob.glob(batchFoldersDir + '/Batch *')
     exportBatchFoldersGlob = glob.glob(hotfoldersDir + '/*/z_Currently Importing */*')
+        #old_time = datetime.datetime.now() - datetime.timedelta(minutes=5)
+        #event_time = datetime.strptime(event_time, '%Y-%m-%dT%H:%M:%S.%f%z')
+
     if (len(importBatchFoldersGlob) > 0) or (len(exportBatchFoldersGlob) > 0):
         batchToImport = batchSelector(importBatchFoldersGlob) # accepts a list of batches, then returns a single, user-selected batch
         if batchToImport[1] == 'Export':
+            if 'Locked' in batchToImport[0]:
+                print('| This batch may still be importing or ripping and cannot be moved out of the hotfolder yet.\n| Please select a new batch.')
+                wait(1.75)
+                return checkForBatchFolders()
             exportFromCaldera(batchToImport[0])
         else:
             importToCaldera(batchToImport) # begins to import the user-selected batch. Accepts a batch as a file path.
@@ -37,9 +46,13 @@ def batchSelector(listOfBatches): #takes a list of batches. Sorts them by priori
     lateBatchList = []
     todayBatchList = []
     futureBatchList = []
+    # batchesToExport = {
+    #     'smooth':getBatchesToExport('Smooth'),
+    #     'woven':getBatchesToExport('Woven'),
+    # }
     batchesToExport = {
-        'smooth':getBatchesToExport('Smooth'),
-        'woven':getBatchesToExport('Woven'),
+        'smooth':getBatchesInHotfolders('Smooth'),
+        'woven':getBatchesInHotfolders('Woven')
     }
 
     # iterates through list of batches to sort by priority
@@ -131,8 +144,28 @@ def getBatchesToExport(material):
     
     # for batch in batchList:
     #     sortedList.append(batch.split('/')[-1])
-
     return batchList
+    
+def getBatchesInHotfolders(material):
+    availableBatches = glob.glob(hotfoldersDir + '/*/z_Currently Importing ' + material + '/*')
+    unavailableBatches = []
+    revisedBatches = []
+    currentTime = datetime.strptime(today.ctime(), '%a %b %d %H:%M:%S %Y')
+
+    for batch in availableBatches:
+        hotfolderForBatch = batch.split('z_Currently Importing')[0] + batch.split('/')[-1].split(' ')[2]
+        #Thu Sep  8 13:27:02 2022
+        importTime = datetime.strptime(ctime(getmtime(hotfolderForBatch)), '%a %b %d %H:%M:%S %Y')
+        if currentTime < importTime + timedelta(minutes=lockHotfolderBatch):
+            unavailableBatches.append(batch)
+    
+    for batch in availableBatches:
+        if batch in unavailableBatches:
+            revisedBatches.append(batch + ' Locked')
+        else:
+            revisedBatches.append(batch)
+    
+    return revisedBatches
 
 def exportFromCaldera(batch):
     batchMaterial = batch.split('/')[-1].split(' ')[2]
