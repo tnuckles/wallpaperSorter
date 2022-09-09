@@ -247,19 +247,6 @@ def importToCaldera(batch): # takes a batch as a file path and loops through its
     batch = batch.split('/')[-1] 
     receivingHotfolder = hotfoldersDir + printerToUse + batchMaterial + '/'
     batch = hotfoldersDir + printerToUse + 'z_Currently Importing ' + batchMaterial + '/' + batch + '/'
-    
-    #globs of ALL batch lists
-    # allBatchLists = (
-    #     sortSamplesForCutting((glob.glob(batch + '4 - Future/Samples/*.pdf', recursive=True))),
-    #     (glob.glob(batch + '4 - Future/Full/*.pdf', recursive=True)),
-    #     sortSamplesForCutting((glob.glob(batch + '3 - Today/Samples/*.pdf', recursive=True))),
-    #     (glob.glob(batch + '3 - Today/Full/*.pdf', recursive=True)),
-    #     sortSamplesForCutting((glob.glob(batch + '2 - Late/Samples/*.pdf', recursive=True))),
-    #     (glob.glob(batch + '2 - Late/Full/*.pdf', recursive=True)),
-    #     sortSamplesForCutting((glob.glob(batch + '1 - OT/Samples/*.pdf', recursive=True))),
-    #     (glob.glob(batch + '1 - OT/Full/*.pdf', recursive=True)),
-    #     (glob.glob(batch + '5 - Utility/*.pdf', recursive=True)),
-    # )
 
     allBatchLists = [
         sortSamplesForCutting(sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '4 - Future/Samples/*.pdf', recursive=True)))),
@@ -341,7 +328,7 @@ def sortSamplesForCutting(pdfList): #takes a list of samples, then sorts them by
             break
 
     for printPdf in pdfList:
-        if counter % 2 == 0:
+        if counter <= len(pdfList)/2:
             firstList.append(printPdf)
             counter += 1
         else:
