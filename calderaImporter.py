@@ -1,14 +1,15 @@
 #!usr/bin/env python
 
 import glob
-from shutil import move, rmtree
-from datetime import datetime, timedelta
-from time import sleep as wait
-from time import ctime
 from os import mkdir
+from time import ctime
 from os.path import getmtime
+from time import sleep as wait
+from shutil import move, rmtree
 from getPdfData import friendlyName
 from batchCreate import tryToMovePDF
+from datetime import datetime, timedelta
+from batchSorting import sortPdfsByOrderNumber
 from batchMenu import populateValidOptions, printMenuOptions
 from wallpaperSorterVariables import batchFoldersDir, hotfoldersDir, pastOrdersDir, lockHotfolderBatch
 
@@ -46,10 +47,6 @@ def batchSelector(listOfBatches): #takes a list of batches. Sorts them by priori
     lateBatchList = []
     todayBatchList = []
     futureBatchList = []
-    # batchesToExport = {
-    #     'smooth':getBatchesToExport('Smooth'),
-    #     'woven':getBatchesToExport('Woven'),
-    # }
     batchesToExport = {
         'smooth':getBatchesInHotfolders('Smooth'),
         'woven':getBatchesInHotfolders('Woven')
@@ -264,17 +261,25 @@ def importToCaldera(batch): # takes a batch as a file path and loops through its
     #     (glob.glob(batch + '5 - Utility/*.pdf', recursive=True)),
     # )
 
-    allBatchLists = (
-        ((glob.glob(batch + '4 - Future/Samples/*.pdf', recursive=True))),
-        (glob.glob(batch + '4 - Future/Full/*.pdf', recursive=True)),
-        ((glob.glob(batch + '3 - Today/Samples/*.pdf', recursive=True))),
-        (glob.glob(batch + '3 - Today/Full/*.pdf', recursive=True)),
-        ((glob.glob(batch + '2 - Late/Samples/*.pdf', recursive=True))),
-        (glob.glob(batch + '2 - Late/Full/*.pdf', recursive=True)),
-        ((glob.glob(batch + '1 - OT/Samples/*.pdf', recursive=True))),
-        (glob.glob(batch + '1 - OT/Full/*.pdf', recursive=True)),
-        (glob.glob(batch + '5 - Utility/*.pdf', recursive=True)),
-    )
+    allBatchLists = [
+        glob.glob(batch + '4 - Future/Samples/*.pdf', recursive=True),
+        glob.glob(batch + '4 - Future/Full/*.pdf', recursive=True),
+        glob.glob(batch + '3 - Today/Samples/*.pdf', recursive=True),
+        glob.glob(batch + '3 - Today/Full/*.pdf', recursive=True),
+        glob.glob(batch + '2 - Late/Samples/*.pdf', recursive=True),
+        glob.glob(batch + '2 - Late/Full/*.pdf', recursive=True),
+        glob.glob(batch + '1 - OT/Samples/*.pdf', recursive=True),
+        glob.glob(batch + '1 - OT/Full/*.pdf', recursive=True),
+        glob.glob(batch + '5 - Utility/*.pdf', recursive=True),
+    ]
+    if len(allBatchLists[0]) > 2:
+        allBatchLists[0] = sortPdfsByOrderNumber(allBatchLists[0])
+    if len(allBatchLists[2]) > 2:
+        allBatchLists[2] = sortPdfsByOrderNumber(allBatchLists[2])
+    if len(allBatchLists[4]) > 2:
+        allBatchLists[4] = sortPdfsByOrderNumber(allBatchLists[4])
+    if len(allBatchLists[6]) > 2:
+        allBatchLists[6] = sortPdfsByOrderNumber(allBatchLists[6])
 
     for pdfList in allBatchLists:
         try:
