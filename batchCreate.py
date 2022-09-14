@@ -10,12 +10,13 @@ import wallpaperSorterVariables as gv
 from add_macos_tag import apply_tag as applyTag
 from os import mkdir, remove, rmdir, walk, listdir
 
-def getPdfGlob(dueDate, material, fullOrSamp): # Takes a "due date" (OT, Late, Today, Future), a material type, and full or sample, then returns a glob list 
+def getPdfGlob(dueDate, material, fullOrSamp): # Takes a "due date" (OT, Late, Today, Tomorrow, Future), a material type, and full or sample, then returns a glob list 
     dueDateLookup = {
         'OT':'1 - OT/',
         'Late':'2 - Late/',
         'Today':'3 - Today/',
-        'Future':'4 - Future/',
+        'Tomorrow':'4 - Tomorrow/',
+        'Future':'5 - Future/',
         'all':'*/',
     }
     material = gv.dirLookupDict[material]
@@ -44,6 +45,10 @@ def createBatch(currentBatchDict, availablePdfs): # gathers PDFs for the new bat
         currentBatchDict = batchLoopController('Today','full',currentBatchDict, availablePdfs)
     if currentBatchDict['batchDetails']['length'] < (currentBatchDict['batchDetails']['materialLength'] - 9.6): #if there's at least room for one sample, check for samples
         currentBatchDict = batchLoopController('Today','sample',currentBatchDict, availablePdfs)
+    if currentBatchDict['batchDetails']['length'] < currentBatchDict['batchDetails']['materialLength'] - 96: #if there's at least room for 8' panel, check for more full orders. Otherwise, move onto samples
+        currentBatchDict = batchLoopController('Tomorrow','full',currentBatchDict, availablePdfs)
+    if currentBatchDict['batchDetails']['length'] < (currentBatchDict['batchDetails']['materialLength'] - 9.6): #if there's at least room for one sample, check for samples
+        currentBatchDict = batchLoopController('Tomorrow','sample',currentBatchDict, availablePdfs)
     if currentBatchDict['batchDetails']['length'] < currentBatchDict['batchDetails']['materialLength'] - 96: #if there's at least room for 8' panel, check for more full orders. Otherwise, move onto samples
         currentBatchDict = batchLoopController('Future','full',currentBatchDict, availablePdfs)
     if currentBatchDict['batchDetails']['length'] < (currentBatchDict['batchDetails']['materialLength'] - 9.6): #if there's at least room for one sample, check for samples
@@ -85,6 +90,8 @@ def createBatchFolderAndMovePdfs(currentBatchDict): # Creates a new batch folder
         currentBatchDict['Late']['sample']['batchList'],
         currentBatchDict['Today']['full']['batchList'],
         currentBatchDict['Today']['sample']['batchList'],
+        currentBatchDict['Tomorrow']['full']['batchList'],
+        currentBatchDict['Tomorrow']['sample']['batchList'],
         currentBatchDict['Future']['full']['batchList'],
         currentBatchDict['Future']['sample']['batchList'],
     )
@@ -98,8 +105,11 @@ def createBatchFolderAndMovePdfs(currentBatchDict): # Creates a new batch folder
         4: batchDirectory + '/2 - Late/Samples',
         5: batchDirectory + '/3 - Today/Full',
         6: batchDirectory + '/3 - Today/Samples',
-        7: batchDirectory + '/4 - Future/Full',
-        8: batchDirectory + '/4 - Future/Samples',
+        7: batchDirectory + '/4 - Tomorrow/Full',
+        8: batchDirectory + '/4 - Tomorrow/Samples',
+        9: batchDirectory + '/5 - Future/Full',
+        10: batchDirectory + '/5 - Future/Samples',
+
     }
 
     # begin moving PDFs in the currentBatchDict to the new directory folders
@@ -141,7 +151,8 @@ def splitFullPdfs(batchDirectory):
         '/1 - OT',
         '/2 - Late',
         '/3 - Today',
-        '/4 - Future',
+        '/4 - Tomorrow',
+        '/5 - Future',
     ]
     tag = 'Hotfolder'
 
@@ -191,8 +202,9 @@ def makeBatchDirectories(batchDirectory): # makes all the proper batch directori
         batchDirectory + '/1 - OT',
         batchDirectory + '/2 - Late',
         batchDirectory + '/3 - Today',
-        batchDirectory + '/4 - Future',
-        batchDirectory + '/5 - Utility'
+        batchDirectory + '/4 - Tomorrow',
+        batchDirectory + '/5 - Future',
+        batchDirectory + '/6 - Utility'
     )
     batchListDict2 = (
         batchListDict[0] + '/Full',
@@ -203,6 +215,8 @@ def makeBatchDirectories(batchDirectory): # makes all the proper batch directori
         batchListDict[2] + '/Samples',
         batchListDict[3] + '/Full',
         batchListDict[3] + '/Samples',
+        batchListDict[4] + '/Full',
+        batchListDict[4] + '/Samples',
     )
 
     for batchList in batchListDict:
@@ -225,6 +239,8 @@ def setBatchPriority(currentBatchDict): # iterates over each batch list and sets
     lateSamp = currentBatchDict['Late']['sample']['batchList']
     todayFull = currentBatchDict['Today']['full']['batchList']
     todaySamp = currentBatchDict['Today']['sample']['batchList']
+    tomorrowFull = currentBatchDict['Tomorrow']['full']['batchList']
+    tomorrowSamp = currentBatchDict['Tomorrow']['sample']['batchList']
     futureFull = currentBatchDict['Future']['full']['batchList']
     futureSamp = currentBatchDict['Future']['sample']['batchList']
 
@@ -235,6 +251,8 @@ def setBatchPriority(currentBatchDict): # iterates over each batch list and sets
         return 'Late'
     elif (len(todayFull) > 0) or (len(todaySamp) > 0):
         return 'Today'
+    elif (len(tomorrowFull) > 0) or (len(tomorrowSamp) > 0):
+        return 'Tomorrow'
     elif (len(futureFull) > 0) or (len(futureSamp) > 0):
         return 'Future'
 

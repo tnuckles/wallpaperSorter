@@ -20,6 +20,7 @@ getHeader = {
     'ot': calderaDir + 'z_Storage/assets/headers/999999999-headerOt.pdf',
     'late': calderaDir + 'z_Storage/assets/headers/999999999-headerLate.pdf',
     'today': calderaDir + 'z_Storage/assets/headers/999999999-headerToday.pdf',
+    'tomorrow': calderaDir + 'z_Storage/assets/headers/999999999-headerTomorrow.pdf',
     'future': calderaDir + 'z_Storage/assets/headers/999999999-headerFuture.pdf',
 }
 
