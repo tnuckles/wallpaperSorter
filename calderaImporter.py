@@ -46,6 +46,7 @@ def batchSelector(listOfBatches): #takes a list of batches. Sorts them by priori
     otBatchList = []
     lateBatchList = []
     todayBatchList = []
+    tomorrowBatchList = []
     futureBatchList = []
     batchesToExport = {
         'smooth':getBatchesInHotfolders('Smooth'),
@@ -60,6 +61,8 @@ def batchSelector(listOfBatches): #takes a list of batches. Sorts them by priori
             lateBatchList.append(batch)
         elif batch.endswith('Today'):
             todayBatchList.append(batch)
+        elif batch.endswith('Tomorrow'):
+            tomorrowBatchList.append(batch)
         else:
             futureBatchList.append(batch)
         
@@ -68,6 +71,7 @@ def batchSelector(listOfBatches): #takes a list of batches. Sorts them by priori
     otBatchList = sortBatchesByID(otBatchList)
     lateBatchList = sortBatchesByID(lateBatchList)
     todayBatchList = sortBatchesByID(todayBatchList)
+    tomorrowBatchList = sortBatchesByID(tomorrowBatchList)
     futureBatchList = sortBatchesByID(futureBatchList)
     smoothExportList = sortBatchesByID(batchesToExport['smooth'])
     wovenExportList = sortBatchesByID(batchesToExport['woven'])
@@ -79,6 +83,8 @@ def batchSelector(listOfBatches): #takes a list of batches. Sorts them by priori
     lateListStop = listOptionCounter-1
     listOptionCounter = printBatchList('Today', todayBatchList, listOptionCounter)
     todayListStop = listOptionCounter-1
+    listOptionCounter = printBatchList('Tomorrow', tomorrowBatchList, listOptionCounter)
+    tomorrowListStop = listOptionCounter-1
     listOptionCounter = printBatchList('Future', futureBatchList, listOptionCounter)
     futureListStop = listOptionCounter-1
     listOptionCounter = printBatchList('Smooth', smoothExportList, listOptionCounter, export=True)
@@ -118,8 +124,13 @@ def batchSelector(listOfBatches): #takes a list of batches. Sorts them by priori
         batch = todayBatchList[command]
         print('\n| Selected', batch.split('/')[-1], 'for print.')
         return batch
-    elif todayListStop < command <= futureListStop:
+    elif todayListStop < command <= tomorrowListStop:
         command -= (1 + todayListStop)
+        batch = tomorrowBatchList[command]
+        print('\n| Selected', batch.split('/')[-1], 'for print.')
+        return batch
+    elif tomorrowListStop < command <= futureListStop:
+        command -= (1 + tomorrowListStop)
         batch = futureBatchList[command]
         print('\n| Selected', batch.split('/')[-1], 'for print.')
         return batch
@@ -220,11 +231,15 @@ def removeEmptyDirectories(batchDirectory): # once a batch folder has been made,
     except:
         pass
     try:
-        rmtree(batchDirectory + '/4 - Future')
+        rmtree(batchDirectory + '/4 - Tomorrow')
     except:
         pass
     try:
-        rmtree(batchDirectory + '/5 - Utility')
+        rmtree(batchDirectory + '/5 - Future')
+    except:
+        pass
+    try:
+        rmtree(batchDirectory + '/6 - Utility')
     except:
         pass
     return
@@ -249,8 +264,10 @@ def importToCaldera(batch): # takes a batch as a file path and loops through its
     batch = hotfoldersDir + printerToUse + 'z_Currently Importing ' + batchMaterial + '/' + batch + '/'
 
     allBatchLists = [
-        sortSamplesForCutting(sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '4 - Future/Samples/*.pdf', recursive=True)))),
-        sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '4 - Future/Full/*.pdf', recursive=True))),
+        sortSamplesForCutting(sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '5 - Future/Samples/*.pdf', recursive=True)))),
+        sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '5 - Future/Full/*.pdf', recursive=True))),
+        sortSamplesForCutting(sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '4 - Tomorrow/Samples/*.pdf', recursive=True)))),
+        sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '4 - Tomorrow/Full/*.pdf', recursive=True))),
         sortSamplesForCutting(sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '3 - Today/Samples/*.pdf', recursive=True)))),
         sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '3 - Today/Full/*.pdf', recursive=True))),
         sortSamplesForCutting(sortPdfsByOrderNumber(sortPdfsByOrderItemNumber(glob.glob(batch + '2 - Late/Samples/*.pdf', recursive=True)))),

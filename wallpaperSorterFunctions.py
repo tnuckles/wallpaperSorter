@@ -15,65 +15,12 @@ today = date.today()
 ### Definitions
 
 def startupChecks():
-    checkOrderDirectoryStructure()
     checkBatchCounter()
     moveForDueDates()
 
 def checkBatchCounter():
     if gv.globalBatchCounter['batchCounter'] > 9000:
         gv.globalBatchCounter['batchCounter'] = 1
-
-def buildSortedDirStructure(parentFolder):
-    os.mkdir(parentFolder + 'Smooth/')
-    os.mkdir(parentFolder + 'Smooth/Sample')
-    os.mkdir(parentFolder + 'Smooth/Full/')
-    os.mkdir(parentFolder + 'Smooth/Full/Repeat 2/')
-    os.mkdir(parentFolder + 'Smooth/Full/Repeat 2/Even Panels/')
-    os.mkdir(parentFolder + 'Smooth/Full/Repeat 2/Odd Panels/')
-    os.mkdir(parentFolder + 'Smooth/Full/Repeat Non-2/')
-    os.mkdir(parentFolder + 'Smooth/Full/Repeat Non-2/Even Panels/')
-    os.mkdir(parentFolder + 'Smooth/Full/Repeat Non-2/Odd Panels/')
-    os.mkdir(parentFolder + 'Woven/')
-    os.mkdir(parentFolder + 'Woven/Sample')
-    os.mkdir(parentFolder + 'Woven/Full/')
-    os.mkdir(parentFolder + 'Woven/Full/Repeat 2/')
-    os.mkdir(parentFolder + 'Woven/Full/Repeat 2/Even Panels/')
-    os.mkdir(parentFolder + 'Woven/Full/Repeat 2/Odd Panels/')
-    os.mkdir(parentFolder + 'Woven/Full/Repeat Non-2/')
-    os.mkdir(parentFolder + 'Woven/Full/Repeat Non-2/Even Panels/')
-    os.mkdir(parentFolder + 'Woven/Full/Repeat Non-2/Odd Panels/')
-    return
-
-def checkOrderDirectoryStructure():
-    if Path(gv.calderaDir + '# Past Orders/Original Files/').exists() == False:
-        try:
-            os.mkdir(gv.calderaDir + '# Past Orders/Original Files')
-        except:
-            pass
-    if Path(gv.sortingDir + '1 - Late and OT/').exists() == True:
-        try:
-            os.mkdir(gv.sortingDir + '1 - OT Orders/')
-        except:
-            pass
-        buildSortedDirStructure(gv.sortingDir + '1 - OT Orders/')
-        try:
-            os.mkdir(gv.sortingDir + '2 - Late/')
-        except:
-            pass
-        buildSortedDirStructure(gv.sortingDir + '2 - Late/')
-    if Path(gv.sortingDir + '2 - Today/').exists() == True:
-        try:
-            os.mkdir(gv.sortingDir + '3 - Today/')
-        except:
-            pass
-        buildSortedDirStructure(gv.sortingDir + '3 - Today/')
-    if Path(gv.sortingDir + '3 - Future/').exists() == True:
-        try:
-            os.mkdir(gv.sortingDir + '4 - Future/')
-        except:
-            pass
-        buildSortedDirStructure(gv.sortingDir + '4 - Future/')
-    return
 
 def moveForDueDates():
     print('\n| Updating Orders. Today\'s date:', today)
@@ -87,12 +34,8 @@ def moveForDueDates():
         orderLength = getPdf.length(printPdf)
         if 'order trouble' in str(checkTags(printPdf)):
             orderDueDate = '1 - OT/'
-        elif orderDueDate < today:
-            orderDueDate = '2 - Late/'
-        elif orderDueDate > today:
-            orderDueDate = '4 - Future/'
         else:
-            orderDueDate = '3 - Today/'
+            orderDueDate = dueDateLookup(orderDueDate)
         # Checks if order is over the maximum length of a roll and moves it to Needs Attention
         if material == 'Wv':
             if orderLength >= gv.dirLookupDict['MaterialLength']['Woven']:
@@ -537,10 +480,12 @@ def buildDBSadNoises():
 def dueDateLookup(dueDate):
     if dueDate < date.today():
         return '2 - Late/'
-    elif dueDate > date.today():
-        return '4 - Future/'
-    else:
+    elif dueDate > date.today() + timedelta(days=1):
+        return '5 - Future/'
+    elif dueDate == date.today():
         return '3 - Today/'
+    else:
+        return '4 - Tomorrow/'
 
 def removeOldOrders(folderToClean, days): #removes folders and contents older than X days
     olderThanDays = days
