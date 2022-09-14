@@ -67,6 +67,19 @@ currentBatchDict = {
             },
             'header':'',
         },
+        'Tomorrow':{
+            'full':{
+                'batchLength':0,
+                'batchList':[],
+                'header':getHeader['tomorrow']
+            },
+            'sample':{
+                'batchLength':0,
+                'batchList':[],
+                'header':getHeader['tomorrow']
+            },
+            'header':'',
+        },
         'Future':{
             'full':{
                 'batchLength':0,
@@ -104,6 +117,16 @@ availablePdfs = {
             },
         },
         'Today':{
+            'full':{
+                'batchLength':0,
+                'batchList':[],
+            },
+            'sample':{
+                'batchLength':0,
+                'batchList':[],
+            },
+        },
+        'Tomorrow':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
@@ -179,8 +202,9 @@ def checkminLength(material, minBatchLength):
     otLength = availablePdfs['OT']['full']['batchLength'] + availablePdfs['OT']['sample']['batchLength']
     lateLength = availablePdfs['Late']['full']['batchLength'] + availablePdfs['Late']['sample']['batchLength']
     todayLength = availablePdfs['Today']['full']['batchLength'] + availablePdfs['Today']['sample']['batchLength']
+    tomorrowLength = availablePdfs['Tomorrow']['full']['batchLength'] + availablePdfs['Tomorrow']['sample']['batchLength']
     futureLength = availablePdfs['Future']['full']['batchLength'] + availablePdfs['Future']['sample']['batchLength']
-    potentialBatchLength = otLength + lateLength + todayLength + futureLength
+    potentialBatchLength = otLength + lateLength + todayLength + tomorrowLength + futureLength
     if potentialBatchLength < minBatchLength:
         print('| Not enough', material, 'PDFs to fill up 80' + "% " + 'of a roll.')
         return buildABatch()
@@ -207,6 +231,11 @@ def fillAvailablePdfsDict(material):
     availablePdfs['Today']['full']['batchLength'] = calculateFull(availablePdfs['Today']['full']['batchList'])
     availablePdfs['Today']['sample']['batchList'] = sortPdfsByOrderNumber(getPdfGlob('Today', material, 'sample'))
     availablePdfs['Today']['sample']['batchLength'] = calculateSample(availablePdfs['Today']['sample']['batchList'])
+    '''Tomorrow Pdfs'''
+    availablePdfs['Tomorrow']['full']['batchList'] = sortPdfs(getPdfGlob('Tomorrow', material, 'full'))
+    availablePdfs['Tomorrow']['full']['batchLength'] = calculateFull(availablePdfs['Tomorrow']['full']['batchList'])
+    availablePdfs['Tomorrow']['sample']['batchList'] = sortPdfsByOrderNumber(getPdfGlob('Tomorrow', material, 'sample'))
+    availablePdfs['Tomorrow']['sample']['batchLength'] = calculateSample(availablePdfs['Tomorrow']['sample']['batchList'])
     '''Future Pdfs'''
     availablePdfs['Future']['full']['batchList'] = sortPdfs(getPdfGlob('Future', material, 'full'))
     availablePdfs['Future']['full']['batchLength'] = calculateFull(availablePdfs['Future']['full']['batchList'])
@@ -276,6 +305,19 @@ def resetCurrentBatchDict(): # sets currentBatchDict to default/empty values.
             },
             'header':'',
         },
+        'Tomorrow':{
+            'full':{
+                'batchLength':0,
+                'batchList':[],
+                'header':getHeader['tomorrow']
+            },
+            'sample':{
+                'batchLength':0,
+                'batchList':[],
+                'header':getHeader['tomorrow']
+            },
+            'header':'',
+        },
         'Future':{
             'full':{
                 'batchLength':0,
@@ -290,7 +332,6 @@ def resetCurrentBatchDict(): # sets currentBatchDict to default/empty values.
             'header':'',
         },
     }
-
     return currentBatchDict
 
 def resetAvailablePdfs():
@@ -316,6 +357,16 @@ def resetAvailablePdfs():
             },
         },
         'Today':{
+            'full':{
+                'batchLength':0,
+                'batchList':[],
+            },
+            'sample':{
+                'batchLength':0,
+                'batchList':[],
+            },
+        },
+        'Tomorrow':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
