@@ -256,9 +256,11 @@ def setBatchPriority(currentBatchDict): # iterates over each batch list and sets
     elif (len(futureFull) > 0) or (len(futureSamp) > 0):
         return 'Future'
 
-def tryToMovePDF(printPDF, BatchDir, friendlyPdfName): # function that tries to move a PDF. If it can't move, it will try to copy then remove the original. If it can't do that, it will error out gracefully.
+def tryToMovePDF(printPDF, BatchDir, friendlyPdfName, verbose=False): # function that tries to move a PDF. If it can't move, it will try to copy then remove the original. If it can't do that, it will error out gracefully.
     try:
         move(printPDF, BatchDir)
+        if verbose == True:
+            print(f'| Moved: {friendlyPdfName}')
         return
     except Error:
         if getPdf.size == 'Full':

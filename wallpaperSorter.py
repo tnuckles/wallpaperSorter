@@ -3,7 +3,7 @@
 from copy import copy
 from datetime import datetime
 from batchController import buildABatch
-from wallpaperSorterFunctions import moveForDueDates, transferFilesFromDrive, sortDownloadedOrders, startupChecks
+from wallpaperSorterFunctions import moveForDueDates, transferFilesFromDrive, unzipRenameSortPdfs, startupChecks
 from calderaImporter import calderaBatchImporter
 from shutil import copytree, rmtree
 from wallpaperSorterVariables import calderaDir, sortingDir
@@ -12,7 +12,7 @@ today = datetime.today()
 
 def mainMenu():
     menuOptions = (
-        (1, 'Sort Orders', sortDownloadedOrders),
+        (1, 'Sort Orders', unzipRenameSortPdfs),
         (2, 'Batch Orders', buildABatch),
         (3, 'Caldera Batch Importer', calderaBatchImporter),
         (4, 'Download Orders from Google Drive', transferFilesFromDrive),
