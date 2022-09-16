@@ -61,6 +61,7 @@ def getInput(validOptionsList): # Prompts user for input and validates it agains
 def main():
     run = True
     try:
+        #print('no startup checks today')
         startupChecks()
     except:
         pass

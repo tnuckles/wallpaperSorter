@@ -57,9 +57,9 @@ def sortPdfsToSortedFolders(pathToCheck, verbose=False):
             tryToMovePDF(printPdf, gv.needsAttention, friendlyName, verbose)
         else:
             if orderSize == 'Samp':
-                newFilePath = gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Sample/'
+                newFilePath = gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Sample/' + printPdf.split('/')[-1]
             else:
-                newFilePath = gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Full/' + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven]
+                newFilePath = gv.sortingDir + orderDueDate + gv.dirLookupDict[material] + 'Full/' + gv.dirLookupDict['RepeatDict'][repeat] + gv.dirLookupDict[oddOrEven] + printPdf.split('/')[-1]
         tryToMovePDF(printPdf, newFilePath, friendlyName)
     
     ordersInNeedsAttention = len(glob.glob(gv.needsAttention + '*.pdf'))
@@ -80,7 +80,7 @@ def unzipRenameSortPdfs():
             openJSON = json.load(file)
         parseJSON(openJSON, orderJSON, fileToUnzipTo)
         splitMultiPagePDFs(glob.glob(fileToUnzipTo + '*.pdf'))
-        checkForMultiQtySamplePdfs(glob.glob(fileToUnzipTo + '*.pdf'))
+        checkForMultiQtySamplePdfs(glob.glob(fileToUnzipTo + '*-Samp-*.pdf'))
         try:
             sortPdfsToSortedFolders(glob.glob(fileToUnzipTo + '*.pdf'))
         except:
