@@ -207,10 +207,6 @@ def keepTrackOfPDF(orderNumber, pdfFileName):
     else:
         gv.countOfRefPdfs[orderNumber][pdfFileName] = 1
 
-def transferFilesFromDrive():
-    print('nah')
-    return
-
 def keepTrackOfOrderNumber(orderNumber): #keeps track of the original PDF names to alert fulfillment to multi-paper type PDFs
     if orderNumber in gv.countOfRefPdfs:
         pass

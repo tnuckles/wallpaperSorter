@@ -2,11 +2,12 @@
 
 from copy import copy
 from datetime import datetime
-from batchController import buildABatch
-from wallpaperSorterFunctions import moveForDueDates, transferFilesFromDrive, unzipRenameSortPdfs, startupChecks
-from calderaImporter import calderaBatchImporter
 from shutil import copytree, rmtree
+from batchController import buildABatch
+from calderaImporter import calderaBatchImporter
+import downloadFromDrive as transferFilesFromDrive
 from wallpaperSorterVariables import calderaDir, sortingDir
+from wallpaperSorterFunctions import moveForDueDates, unzipRenameSortPdfs, startupChecks
 
 today = datetime.today()
 
