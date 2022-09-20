@@ -5,7 +5,7 @@ from datetime import datetime
 from shutil import copytree, rmtree
 from batchController import buildABatch
 from calderaImporter import calderaBatchImporter
-import downloadFromDrive as transferFilesFromDrive
+from downloadFromDrive import transferFilesFromDrive
 from wallpaperSorterVariables import calderaDir, sortingDir
 from wallpaperSorterFunctions import moveForDueDates, unzipRenameSortPdfs, startupChecks
 
