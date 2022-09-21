@@ -10,7 +10,7 @@ from getPdfData import friendlyName
 from batchCreate import tryToMovePDF
 from datetime import datetime, timedelta
 from batchMenu import populateValidOptions, printMenuOptions
-from batchSorting import sortPdfsByOrderNumber, sortPdfsByOrderItemNumber, sortPdfsByHeight
+from batchSorting import sortPdfsByOrderNumber, sortPdfsByOrderItemNumber
 from wallpaperSorterVariables import batchFoldersDir, hotfoldersDir, pastOrdersDir, lockHotfolderBatch
 
 
