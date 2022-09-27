@@ -2,7 +2,7 @@
 
 import os, shutil, glob, pikepdf
 from datetime import date
-from PyPDF2 import PdfFileReader, PdfFileWriter, utils
+from PyPDF2 import PdfFileReader, PdfFileWriter, errors
 
 import getPdfData as getPdf
 import wallpaperSorterVariables as gv
@@ -58,7 +58,7 @@ def checkRepeatSize():
             elif printPDFrepeat > 2:
                 try:
                     cropMultiPanelPDFs(printPDF)
-                except utils.PdfReadError:
+                except errors.PdfReadError:
                     print('| Couldn\'t crop the panels for the following order. Please check non-repeat 2 folders.')
                     continue
 
@@ -90,30 +90,31 @@ def checkRepeatDuringBatching(pdf, batchDir):
         elif printPDFrepeat > 2:
             try:
                 cropMultiPanelPDFs(pdf, batchDir)
-            except utils.PdfReadError:
+            except errors.PdfReadError:
                 print('| Couldn\'t crop the panels for the following pdf. Please check the batch folder')
                 print('| PDF:', pdf.split('/')[-1])
                 return
 
-def determine_panel_quantity(quantity, repeat):   
-    #these 3 variables are for testing; delete them later.
-    
+def determine_panel_quantity(quantity, repeat, OT=False):   
+ 
     quantity_per_panel_dict = {}
 
     quantity_counter = 0
     repeat = int(repeat / 2)
     for panel in range(repeat):
         quantity_per_panel_dict[panel + 1] = 0
-
-    while quantity_counter < quantity:
-        for panel in range(repeat):
-            panel_num = panel+1
-            quantity_per_panel_dict[panel_num] += 1
-            quantity_counter += 1
-            if quantity_counter == quantity:
-                break
-            elif panel_num == repeat:
-                panel = 0
+    if OT != False:
+        quantity_per_panel_dict[int(OT)] = quantity
+    else:
+        while quantity_counter < quantity:
+            for panel in range(repeat):
+                panel_num = panel+1
+                quantity_per_panel_dict[panel_num] += 1
+                quantity_counter += 1
+                if quantity_counter == quantity:
+                    break
+                elif panel_num == repeat:
+                    panel = 0
 
     return quantity_per_panel_dict
 
@@ -142,8 +143,12 @@ def cropMultiPanelPDFs(printPDFToSplit, batchDir):
         }
     
     orderDict['CroppedPDFName'] = orderDict['fileName'].split(orderDict['templateName'])[0] + orderDict['templateName'] + ' Split' + orderDict['fileName'].split(orderDict['templateName'])[1] + '.pdf'
-
-    quantity_per_panel_dict = determine_panel_quantity(orderDict['quantity'], orderDict['repeat'])
+    
+    if '(OTP' in getPdf.name(orderDict['templateName']):
+        OTPanel = getPdf.name(orderDict['templateName']).split('(OTP')[1].split(')')[0]
+        quantity_per_panel_dict = determine_panel_quantity(orderDict['quantity'], orderDict['repeat'], OTPanel)
+    else:
+        quantity_per_panel_dict = determine_panel_quantity(orderDict['quantity'], orderDict['repeat'])
 
     os.chdir(batchDir)
     for page in range(orderDict['repeatPanels']):
@@ -178,7 +183,7 @@ def cropMultiPanelPDFs(printPDFToSplit, batchDir):
         writer = PdfFileWriter()
         try:
             printPDF = PdfFileReader(open(PDF, "rb"))
-        except utils.PdfReadError:
+        except errors.PdfReadError:
             print('| Couldn\'t fix file. Skipping.\n| File:', PDF)
             continue
         numOfPages = printPDF.getNumPages()

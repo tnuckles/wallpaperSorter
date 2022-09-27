@@ -2,7 +2,7 @@
 
 import glob
 from math import floor
-from PyPDF2 import utils
+from PyPDF2 import errors
 import getPdfData as getPdf
 import pdf_splitter as pdfSplitter
 from shutil import move, copy, Error
@@ -163,7 +163,7 @@ def splitFullPdfs(batchDirectory):
             if getPdf.repeat(printPdf) > 2:
                 try:
                     pdfSplitter.cropMultiPanelPDFs(printPdf, batchDirectory + dueDate + '/Full')
-                except utils.PdfReadError:
+                except errors.PdfReadError:
                     print('| Couldn\'t split file. In case it\'s needed, a copy of the original file is in "#Past Orders/Original Files"')
                     print('| PDF:', getPdf.friendlyName(printPdf))
                     tag = 'Manual'
@@ -180,16 +180,16 @@ def addColorGuides(currentBatchDict): # check if the total length can fit color 
         utilityQty = floor((materialLength - batchLength)/9.5)
         if utilityQty == 0:
             utilityQty = 1
-            currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'] = '/5 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(utilityQty*2) + '-Color Chart-L' + str(utilityQty * 9.5) + '-W25-H9.pdf'
+            currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'] = '/6 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(utilityQty*2) + '-Color Chart-L' + str(utilityQty * 9.5) + '-W25-H9.pdf'
             batchLength += (utilityQty * 9.5)
         elif utilityQty <= 11:
-            currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'] = '/5 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(utilityQty*2) + '-Color Chart-L' + str(utilityQty * 9.5) + '-W25-H9.pdf'
+            currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'] = '/6 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(utilityQty*2) + '-Color Chart-L' + str(utilityQty * 9.5) + '-W25-H9.pdf'
             batchLength += (utilityQty * 9.5)
         elif utilityQty > 11:
             stickerRollQty = 2
             utilityQty = utilityQty - stickerRollQty
-            currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'] = '/5 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(utilityQty*2) + '-Color Chart-L' + str(utilityQty * 9.5) + '-W25-H9.pdf'
-            currentBatchDict['batchDetails']['rollStickers']['uniqueFilename'] = '/5 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(stickerRollQty*2) + '-Roll Stickers-L19-W25-H9.pdf'
+            currentBatchDict['batchDetails']['colorGuides']['uniqueFilename'] = '/6 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(utilityQty*2) + '-Color Chart-L' + str(utilityQty * 9.5) + '-W25-H9.pdf'
+            currentBatchDict['batchDetails']['rollStickers']['uniqueFilename'] = '/6 - Utility/999999999-1-(' + str(gv.today) + ')-Stnd-' + gv.substrate[batchMaterial] + '-Samp-Rp 2-Qty ' + str(stickerRollQty*2) + '-Roll Stickers-L19-W25-H9.pdf'
             batchLength += (utilityQty * 9.5)
             batchLength += 19
 

@@ -9,11 +9,13 @@ from datetime import date, timedelta
 from add_macos_tag import apply_tag as applyTag
 import shutil, json, glob, pikepdf
 from os import remove, rmdir, walk, listdir, rename
+from re import findall
 
 today = date.today()
 missingPdfList = []
 damagedPdfList = []
 splitPdfList = []
+otPanelUknownList = []
 
 def startupChecks():
     checkBatchCounter()
@@ -53,6 +55,9 @@ def sortPdfsToSortedFolders(pathToCheck, verbose=False):
         orderLength = getPdf.length(printPdf)
 
         # Checks if order is over the maximum length of a roll and moves it to Needs Attention
+        if '(OTPUnknown)' in printPdf.split('/')[-1]:
+            otPanelUknownList.append(getPdf.name(printPdf))
+            shutil.move(printPdf, gv.needsAttention + printPdf.split('/')[-1].split('.pdf')[0] + '_OT PANEL UNKNOWN.pdf')
         if orderLength >= gv.dirLookupDict['MaterialLength'][gv.substrate[material]]:
             tryToMovePDF(printPdf, gv.needsAttention, friendlyName, verbose)
         else:
@@ -86,9 +91,10 @@ def unzipRenameSortPdfs():
         except:
             print(f'| Couldn\'t properly sort PDFs in {fileToUnzipTo}')
 
-    reportListOfPdfs(splitPdfList, 'split into multiple files and properly sorted')
-    reportListOfPdfs(missingPdfList, 'missing and were moved to 4 Needs Attention')
-    reportListOfPdfs(damagedPdfList, 'damaged and were moved to 4 Needs Attention')
+    reportListOfPdfs(splitPdfList, 'were split into multiple files and properly sorted')
+    reportListOfPdfs(missingPdfList, 'were missing and were moved to 4 Needs Attention')
+    reportListOfPdfs(damagedPdfList, 'were damaged and were moved to 4 Needs Attention')
+    reportListOfPdfs(otPanelUknownList, 'had OT panels that couldn\'t be read and were moved to 4 Needs Attention')
 
     cleanupDownloadDir(gv.downloadDir)
 
@@ -111,6 +117,7 @@ def renamePdfWithDetails(openFile, JSONitem, JSONPath, fileToUnzipTo, count):
     orderDueDate = openFile['orderDueDate']
     shipVia = gv.shippingMethods[openFile['shippingInfo']['method']['shipvia']]
     originalPDFName = JSONitem['filename']
+    orderItemID = originalPDFName.split('_')[0]
     itemID = originalPDFName.split('_')[0]
     try:
         templateName = JSONitem['description'].split(' ')[2] + ' ' + JSONitem['description'].split(' ')[3]
@@ -121,7 +128,11 @@ def renamePdfWithDetails(openFile, JSONitem, JSONPath, fileToUnzipTo, count):
     height = JSONitem['height'] 
     width = JSONitem['width']
     repeat = JSONitem['wallpaperRepeat']
-    orderTroubleNotes = openFile['order_trouble_notes']
+    orderTroubleNotes = parseOTNotes(openFile['order_trouble_notes'], orderItemID, repeat)
+    if orderTroubleNotes != None:
+        templateName = templateName + ' ' + orderTroubleNotes
+
+
     if width == '9':
         orderSize = 'Samp'
         length = '9.5'
@@ -137,7 +148,7 @@ def renamePdfWithDetails(openFile, JSONitem, JSONPath, fileToUnzipTo, count):
         # See Length Notes at the end of the function for an explanation.
     newPDFName = orderNumber + '-' + str(count) + '-(' + orderDueDate + ')-' + shipVia + '-' + paperType + '-' + orderSize + '-Rp ' + repeat.split("'")[0] + '-Qty ' + quantity + '-' + templateName + '-L' + length + '-W' + width + '-H' + height
     renamePDF(originalPDFName, newPDFName, JSONPath)
-    if (orderTroubleStatus == 'billable') or (orderTroubleNotes == 'unbillable'):
+    if orderTroubleStatus != 'new':
         applyTag('order trouble', gv.downloadDir +  '/' + getPdf.orderNumber(newPDFName) + '/' + newPDFName + '.pdf')
     keepTrackOfPDF(orderNumber, originalPDFName) 
     count += 1
@@ -184,6 +195,32 @@ def renamePdfWithDetails(openFile, JSONitem, JSONPath, fileToUnzipTo, count):
         # Length Notes: for the times that a panel is by itself and still has another .5" section.'''
     
     return count
+
+def parseOTNotes(otNotes, orderItemID, repeat):
+    if "'" in repeat:
+        repeat = repeat.split("'")[0]
+    try:
+        orderItemIDFromUser = str(findall(r"(?<!\d)\d{7}(?!\d)", otNotes)) #should find any 7 digit number for the orderItemID
+        if orderItemIDFromUser != '[]':
+            orderItemIDFromUser = orderItemIDFromUser.split("['")[1].split("']")[0]
+            if orderItemIDFromUser != orderItemID:
+                return False
+        panelID = str(findall(r"\D+(\d+)", otNotes)) #should find a digit after a string
+        if panelID != '[]':
+            panelID = panelID.split("['")[1].split("']")[0] 
+        if panelID != '[]':
+            panelID.split
+            if int(panelID) > (int(repeat)/2):
+                formattedOTNotes = '(OTPUnknown)'
+                return formattedOTNotes
+        formattedOTNotes = '(OTP' + panelID + ')'
+        if formattedOTNotes == '(OTP[])':
+            formattedOTNotes = None
+
+        return formattedOTNotes
+    except:
+        formattedOTNotes = '(OTPUnknown)'
+        return formattedOTNotes
 
 def renamePDF(old, new, JSONFilePath):
     extension = old.split(".")[-1]
@@ -315,7 +352,7 @@ def checkForMultiQtySamplePdfs(pdfList):
 
 def reportListOfPdfs(listToReport, strToPrint):
     if len(listToReport) > 0:
-        print(f'\n| The following PDFs were {strToPrint}:')
+        print(f'\n| The following PDFs {strToPrint}:')
         for item in listToReport:
             print(f'|   {item}')
 
