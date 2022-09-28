@@ -1,10 +1,12 @@
 #!usr/bin/env python
 
+import glob
 from datetime import datetime
 from batchController import buildABatch
 from calderaImporter import calderaBatchImporter
 from downloadFromDrive import transferFilesFromDrive
 from wallpaperSorterFunctions import moveForDueDates, unzipRenameSortPdfs, startupChecks
+from wallpaperSorterVariables import sortingDir
 
 today = datetime.today()
 
@@ -28,8 +30,10 @@ def mainMenu():
     if command[1].startswith('Quit'):
         print('\n| Job\'s done!')
         return False
-
-    return command[2]()
+    elif command[1].startswith('Update Sorting'):
+        return command[2](glob.glob(sortingDir + '**/*.pdf', recursive=True))
+    else:
+        return command[2]()
 
 def populateValidOptions(menuOptions): # Gathers valid options from menus (like batchDetailsMenu) and ensures they are valid
     validOptions = []
