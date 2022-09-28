@@ -128,9 +128,11 @@ def renamePdfWithDetails(openFile, JSONitem, JSONPath, fileToUnzipTo, count):
     height = JSONitem['height'] 
     width = JSONitem['width']
     repeat = JSONitem['wallpaperRepeat']
-    orderTroubleNotes = parseOTNotes(openFile['order_trouble_notes'], orderItemID, repeat)
-    if orderTroubleNotes != None:
-        templateName = templateName + ' ' + orderTroubleNotes
+    otNotes = openFile['order_trouble_notes']
+    if len(openFile['order_trouble_notes']) != 0:
+        orderTroubleNotes = parseOTNotes(otNotes, orderItemID, repeat)
+        if orderTroubleNotes != None:
+            templateName = templateName + ' ' + orderTroubleNotes
 
 
     if width == '9':
@@ -165,7 +167,7 @@ def renamePdfWithDetails(openFile, JSONitem, JSONPath, fileToUnzipTo, count):
             'Length': length,
             'Width': width,
             'Height': height,
-            'OT Notes': orderTroubleNotes,
+            'OT Notes': otNotes,
             'File Path': gv.sortingDir + '2 - Late/' + gv.dirLookupDict[paperType] + gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + gv.dirLookupDict[int(quantity) % 2] + newPDFName,
         }
     else:
@@ -182,7 +184,7 @@ def renamePdfWithDetails(openFile, JSONitem, JSONPath, fileToUnzipTo, count):
                 'Length': length,
                 'Width': width,
                 'Height': height,
-                'OT Notes': orderTroubleNotes,
+                'OT Notes': otNotes,
                 'File Path': gv.sortingDir + '2 - Late/' + gv.dirLookupDict[paperType] + gv.dirLookupDict[orderSize] + gv.dirLookupDict['RepeatDict'][int(repeat.split('\'')[0])] + gv.dirLookupDict[int(quantity) % 2] + newPDFName,
             }
         }
@@ -208,8 +210,6 @@ def parseOTNotes(otNotes, orderItemID, repeat):
         panelID = str(findall(r"\D+(\d+)", otNotes)) #should find a digit after a string
         if panelID != '[]':
             panelID = panelID.split("['")[1].split("']")[0] 
-        if panelID != '[]':
-            panelID.split
             if int(panelID) > (int(repeat)/2):
                 formattedOTNotes = '(OTPUnknown)'
                 return formattedOTNotes
