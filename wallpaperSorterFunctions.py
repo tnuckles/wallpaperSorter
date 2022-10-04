@@ -131,7 +131,7 @@ def renamePdfWithDetails(openFile, JSONitem, JSONPath, fileToUnzipTo, count):
     otNotes = openFile['order_trouble_notes']
     if len(openFile['order_trouble_notes']) != 0:
         orderTroubleNotes = parseOTNotes(otNotes, orderItemID, repeat)
-        if orderTroubleNotes != None:
+        if orderTroubleNotes != False:
             templateName = templateName + ' ' + orderTroubleNotes
 
 
@@ -215,7 +215,7 @@ def parseOTNotes(otNotes, orderItemID, repeat):
                 return formattedOTNotes
         formattedOTNotes = '(OTP' + panelID + ')'
         if formattedOTNotes == '(OTP[])':
-            formattedOTNotes = None
+            formattedOTNotes = False
 
         return formattedOTNotes
     except:
