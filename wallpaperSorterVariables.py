@@ -109,6 +109,7 @@ shippingMethods = {
     'Priority':'Prty',
     'International Priority':'InPrty',
     'Rush':'Rush',
+    'International Rush':'InRush'
 }
 
 pdfsToRename = {
