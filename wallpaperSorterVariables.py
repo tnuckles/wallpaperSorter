@@ -8,13 +8,13 @@ today = date.today()
 
 #Location for Caldera's Folders
 if os.path.expanduser('~').split('/')[-1] == 'Trevor':
-    calderaDir = '/opt/caldera/var/public/'
+    calderaDir = '/Volumes/Samsung SSD/caldera/var/public/'
     driveLocation = '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Test Fulfillment'
 else:
     calderaDir = '/opt/caldera/var/public/'
     driveLocation = '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Fulfillment'
 
-lockHotfolderBatch = 60 #time in minutes to lock the batch folders in caldera so they aren't exported prematurely.
+lockHotfolderBatch = 5 #time in minutes to lock the batch folders in caldera so they aren't exported prematurely.
 
 getHeader = {
     'ot': calderaDir + 'z_Storage/assets/headers/999999999-headerOt.pdf',
