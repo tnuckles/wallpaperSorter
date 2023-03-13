@@ -12,7 +12,7 @@ if os.path.expanduser('~').split('/')[-1] == 'Trevor':
     driveLocation = '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Test Fulfillment'
 else:
     calderaDir = '/opt/caldera/var/public/'
-    driveLocation = '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Fulfillment'
+    driveLocation = '/Users/caldera/Library/CloudStorage/GoogleDrive-mattd@basicinvite.com/# Production/#LvD Fulfillment'
 
 lockHotfolderBatch = 5 #time in minutes to lock the batch folders in caldera so they aren't exported prematurely.
 

@@ -7,6 +7,7 @@ import wallpaperSorterVariables as gv
 from macos_tags import get_all as checkTags
 from datetime import date, timedelta
 from add_macos_tag import apply_tag as applyTag
+from downloadFromDrive import transferFilesFromDrive
 import shutil, json, glob, pikepdf
 from os import remove, rmdir, walk, listdir, rename
 from re import findall
@@ -97,6 +98,9 @@ def unzipRenameSortPdfs():
     reportListOfPdfs(otPanelUknownList, 'had OT panels that couldn\'t be read and were moved to 4 Needs Attention')
 
     cleanupDownloadDir(gv.downloadDir)
+
+    transferFilesFromDrive()
+
 
 def parseJSON(openFile, JSONPath, fileToUnzipTo):
     count = 1
