@@ -12,7 +12,7 @@ if os.path.expanduser('~').split('/')[-1] == 'Trevor':
     driveLocation = '/Volumes/GoogleDrive/Shared drives/# Production/#LvD Test Fulfillment'
 else:
     calderaDir = '/opt/caldera/var/public/'
-    driveLocation = '/Users/caldera/Library/CloudStorage/GoogleDrive-matthew@lovevsdesign.com/# Production/#LvD Fulfillment'
+    driveLocation = '/Users/caldera/Library/CloudStorage/GoogleDrive-matthew@lovevsdesign.com/Shared Drives/# Production/#LvD Fulfillment'
 
 lockHotfolderBatch = 5 #time in minutes to lock the batch folders in caldera so they aren't exported prematurely.
 
@@ -78,7 +78,13 @@ dirLookupDict = { #Dictionary for dynamically creating a directory path for sort
         9:'Repeat Non-2/', #Non-2 Foot Repeats
         10:'Repeat Non-2/', #Non-2 Foot Repeats
         11:'Repeat Non-2/', #Non-2 Foot Repeats
-        12:'Repeat Non-2/', #Non-2 Foot Repeats 
+        12:'Repeat Non-2/', #Non-2 Foot Repeats
+        'Rp 2':'Repeat 2/', #2 Foot Repeats
+        'Rp 4':'Repeat Non-2/', #Non-2 Foot Repeats
+        'Rp 6':'Repeat Non-2/', #Non-2 Foot Repeats
+        'Rp 8':'Repeat Non-2/', #Non-2 Foot Repeats
+        'Rp 10':'Repeat Non-2/', #Non-2 Foot Repeats
+        'Rp 12':'Repeat Non-2/', #Non-2 Foot Repeats
     },
     1:'Odd Panels/',
     0:'Even Panels/',
