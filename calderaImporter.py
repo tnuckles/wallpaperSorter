@@ -303,6 +303,7 @@ def getPrinter(batchMaterial):
         'Ichi':'1 Ichi/',
         'Ni':'2 Ni/',
         'San':'3 San/',
+        'Go':'5 Go/',
     }
 
     return printerLookup[command]
@@ -310,7 +311,7 @@ def getPrinter(batchMaterial):
 def printerCheck(batchMaterial):
     materialHotfolders = glob.glob(hotfoldersDir + '*/z_Currently Importing ' + batchMaterial + '/*')
     unavailablePrinters = []
-    availablePrinters = ['1 Ichi', '2 Ni', '3 San']
+    availablePrinters = ['1 Ichi', '2 Ni', '3 San', '5 Go']
     revisedPrinters = []
 
     for batch in materialHotfolders:
