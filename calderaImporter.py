@@ -314,8 +314,9 @@ def getPrinter(batchMaterial):
 def printerCheck(batchMaterial):
     materialHotfolders = glob.glob(hotfoldersDir + '*/z_Currently Importing ' + batchMaterial + '/*')
     unavailablePrinters = []
+    # We skipped 4 because it is an unlucky number in Japan. That's what Brock
+    # wanted to do. We only have 4 total printers, named 1, 2, 3, and 5.
     availablePrinters = ['1 Ichi', '2 Ni', '3 San', '4 Shi', '5 Go']
-    availablePrinters = ['1 Ichi', '2 Ni', '3 San', '5 Go']
     revisedPrinters = []
 
     for batch in materialHotfolders:
