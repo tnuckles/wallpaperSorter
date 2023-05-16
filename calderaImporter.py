@@ -303,6 +303,10 @@ def getPrinter(batchMaterial):
         'Ichi':'1 Ichi/',
         'Ni':'2 Ni/',
         'San':'3 San/',
+<<<<<<< HEAD
+        'Shi':'4 Shi/',
+=======
+>>>>>>> main
         'Go':'5 Go/',
     }
 
@@ -311,7 +315,11 @@ def getPrinter(batchMaterial):
 def printerCheck(batchMaterial):
     materialHotfolders = glob.glob(hotfoldersDir + '*/z_Currently Importing ' + batchMaterial + '/*')
     unavailablePrinters = []
+<<<<<<< HEAD
+    availablePrinters = ['1 Ichi', '2 Ni', '3 San', '4 Shi', '5 Go']
+=======
     availablePrinters = ['1 Ichi', '2 Ni', '3 San', '5 Go']
+>>>>>>> main
     revisedPrinters = []
 
     for batch in materialHotfolders:
