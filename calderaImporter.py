@@ -1,18 +1,20 @@
 #!usr/bin/env python
 
 import glob
-from os import mkdir
-from time import ctime
-from os.path import getmtime
-from time import sleep as wait
-from shutil import move, rmtree
-from getPdfData import friendlyName
-from batchCreate import tryToMovePDF
 from datetime import datetime, timedelta
-from batchMenu import populateValidOptions, printMenuOptions
-from batchSorting import sortPdfsByOrderNumber, sortPdfsByOrderItemNumber
-from wallpaperSorterVariables import batchFoldersDir, hotfoldersDir, pastOrdersDir, lockHotfolderBatch
+from math import ceil, floor
+from os import mkdir
+from os.path import getmtime
+from shutil import move, rmtree
+from time import ctime
+from time import sleep as wait
 
+from batchCreate import tryToMovePDF
+from batchMenu import populateValidOptions, printMenuOptions
+from batchSorting import sortPdfsByOrderItemNumber, sortPdfsByOrderNumber
+from getPdfData import friendlyName
+from wallpaperSorterVariables import (batchFoldersDir, hotfoldersDir,
+                                      lockHotfolderBatch, pastOrdersDir)
 
 today = datetime.today()
 
@@ -303,10 +305,7 @@ def getPrinter(batchMaterial):
         'Ichi':'1 Ichi/',
         'Ni':'2 Ni/',
         'San':'3 San/',
-<<<<<<< HEAD
         'Shi':'4 Shi/',
-=======
->>>>>>> main
         'Go':'5 Go/',
     }
 
@@ -315,11 +314,8 @@ def getPrinter(batchMaterial):
 def printerCheck(batchMaterial):
     materialHotfolders = glob.glob(hotfoldersDir + '*/z_Currently Importing ' + batchMaterial + '/*')
     unavailablePrinters = []
-<<<<<<< HEAD
     availablePrinters = ['1 Ichi', '2 Ni', '3 San', '4 Shi', '5 Go']
-=======
     availablePrinters = ['1 Ichi', '2 Ni', '3 San', '5 Go']
->>>>>>> main
     revisedPrinters = []
 
     for batch in materialHotfolders:
@@ -342,39 +338,41 @@ def sortSamplesForCutting(pdfList): #takes a list of samples, then sorts them by
     if len(pdfList) == 0:
         return
     
-    counter = 0
+    header = ''    
+
+    for printPdf in pdfList: # This moves the header to the bottom of the list
+        if '999999999-header' in printPdf:
+            header = (printPdf)
+            pdfList.remove(header)
+            break
+    
+    half_list_len = ceil(len(pdfList)/2)
+    second_list_len = floor(len(pdfList)/2)
 
     firstList = []
     secondList = []
 
-    for printPdf in pdfList:
-        if '999999999-header' in printPdf:
-            pdfList.append(printPdf)
-            pdfList.remove(printPdf)
-            break
+    counter = 0
 
     for printPdf in pdfList:
-        if counter <= len(pdfList)/2:
+        if counter < half_list_len:
             firstList.append(printPdf)
             counter += 1
         else:
             secondList.append(printPdf)
-            counter += 1
-    
-    counter = len(firstList) + len(secondList)
 
     sortedList = []
 
-    firstListCounter = 0
-    secondListCounter = 0
-    for i in range(counter):
-        if i % 2 == 0:
-            sortedList.append(firstList[firstListCounter])
-            firstListCounter += 1
-        else:
-            sortedList.append(secondList[secondListCounter])
-            secondListCounter += 1
+    counter = 0
+    for current_count in range(half_list_len):
+        sortedList.append(firstList[counter])
+        try:
+            sortedList.append(secondList[counter])
+        except IndexError:
+            break
+        counter += 1
 
+    sortedList.append(header)
     return sortedList
 
 def moveToHotfolder(pdfList, receivingHotfolder):
