@@ -119,20 +119,14 @@ def sortPdfsByOrderItemNumber(pdfList): # takes a list of pathstopdfs and sorts 
     #currently not used in this file, but only called by calderaImporter. Leaving here for organization.
     listToSort = []
     sortedList = []
-    headerList = []
     for printPdf in pdfList:
-        if 'header' in printPdf:
-            headerList.append(printPdf)
-        else:
-            PdfItemNumber = int(getPdf.orderItem(printPdf))
-            listToSort.append((PdfItemNumber, printPdf))
+        PdfItemNumber = int(getPdf.orderItem(printPdf))
+        listToSort.append((PdfItemNumber, printPdf))
     listToSort.sort(reverse=False, key=lambda pdf: pdf[0])
     pdfList = listToSort
     listToSort = []
     for printPdf in pdfList:
         sortedList.append(printPdf[1])
-    for printPdf in headerList:
-        sortedList.append(printPdf)
     pdfList = sortedList
     sortedList = []
     return pdfList

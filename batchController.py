@@ -4,7 +4,7 @@ import batchMenu as bMenu
 from batchCreate import getPdfGlob
 from batchSorting import calculateFull, calculateSample, sortPdfs, sortPdfsByOrderNumber
 from batchCreate import createBatch, createBatchFolderAndMovePdfs
-from wallpaperSorterVariables import getHeader, getUtilityFiles
+from wallpaperSorterVariables import getUtilityFiles
 
 ### Global Variables
 
@@ -32,66 +32,51 @@ currentBatchDict = {
             'full':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['ot']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['ot']
             },
-            'header':'',
         },
         'Late':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['late']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['late']
             },
-            'header':'',
         },
         'Today':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['today']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['today']
             },
-            'header':'',
         },
         'Tomorrow':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['tomorrow']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['tomorrow']
             },
-            'header':'',
         },
         'Future':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['future']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['future']
             },
-            'header':'',
         },
     }
 
@@ -270,66 +255,51 @@ def resetCurrentBatchDict(): # sets currentBatchDict to default/empty values.
             'full':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['ot']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['ot']
             },
-            'header':'',
         },
         'Late':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['late']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['late']
             },
-            'header':'',
         },
         'Today':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['today']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['today']
             },
-            'header':'',
         },
         'Tomorrow':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['tomorrow']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['tomorrow']
             },
-            'header':'',
         },
         'Future':{
             'full':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['future']
             },
             'sample':{
                 'batchLength':0,
                 'batchList':[],
-                'header':getHeader['future']
             },
-            'header':'',
         },
     }
     return currentBatchDict

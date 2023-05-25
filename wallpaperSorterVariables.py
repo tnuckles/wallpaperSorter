@@ -16,14 +16,6 @@ else:
 
 lockHotfolderBatch = 5 #time in minutes to lock the batch folders in caldera so they aren't exported prematurely.
 
-getHeader = {
-    'ot': calderaDir + 'z_Storage/assets/headers/999999999-headerOt.pdf',
-    'late': calderaDir + 'z_Storage/assets/headers/999999999-headerLate.pdf',
-    'today': calderaDir + 'z_Storage/assets/headers/999999999-headerToday.pdf',
-    'tomorrow': calderaDir + 'z_Storage/assets/headers/999999999-headerTomorrow.pdf',
-    'future': calderaDir + 'z_Storage/assets/headers/999999999-headerFuture.pdf',
-}
-
 getBlankPanel = {
     '40.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 3Foot-L40.75-W25-H40.25.pdf',
     '52.25': calderaDir + 'z_Storage/assets/blank pdfs/999999999-1-(2022-01-01)-Stnd-Sm-Full-Rp 2-Qty 1-BlankPdf 4Foot-L52.75-W25-H52.25.pdf',

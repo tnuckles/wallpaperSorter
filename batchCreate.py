@@ -117,18 +117,15 @@ def createBatchFolderAndMovePdfs(currentBatchDict): # Creates a new batch folder
         batchPriorityCounter += 1
         if len(batchList) > 0:
             for printPdf in batchList:
-                if '999999999-header' not in printPdf:
-                    if 'BlankPdf' in printPdf: # If the PDF is one of the blank fill in pdfs, copy the original asset and rename it to match the item it's filling in next to
-                        # pdfHeight = str(getPdf.height(printPdf))
-                        # defaultBlankPanel = gv.getBlankPanel[pdfHeight]
-                        # batchDir = batchPriorityDict[batchPriorityCounter]
-                        # newName = batchDir + '/' + printPdf.split('/')[-1]
-                        copy(gv.getBlankPanel[str(getPdf.height(printPdf))], batchPriorityDict[batchPriorityCounter] + '/' + printPdf.split('/')[-1])
-                    else:    
-                        tryToMovePDF(printPdf, batchPriorityDict[batchPriorityCounter], getPdf.friendlyName(printPdf))
-                        continue
-                if '999999999-header' in printPdf:
-                    copy(printPdf, batchPriorityDict[batchPriorityCounter]) #this should copy over the header very last
+                if 'BlankPdf' in printPdf: # If the PDF is one of the blank fill in pdfs, copy the original asset and rename it to match the item it's filling in next to
+                    # pdfHeight = str(getPdf.height(printPdf))
+                    # defaultBlankPanel = gv.getBlankPanel[pdfHeight]
+                    # batchDir = batchPriorityDict[batchPriorityCounter]
+                    # newName = batchDir + '/' + printPdf.split('/')[-1]
+                    copy(gv.getBlankPanel[str(getPdf.height(printPdf))], batchPriorityDict[batchPriorityCounter] + '/' + printPdf.split('/')[-1])
+                else:    
+                    tryToMovePDF(printPdf, batchPriorityDict[batchPriorityCounter], getPdf.friendlyName(printPdf))
+                    continue
     batchPriorityCounter = 0
 
     # after moving items, iterate through full orders and split any that are >2 repeat. If anything isn't cropped, it returns the manual tag.
@@ -283,15 +280,9 @@ def batchLoopController(dueDate, fullOrSamp, currentBatchDict, availablePdfs): #
     if fullOrSamp.lower() == 'full':
         currentBatchDict[dueDate][fullOrSamp] = batchLoopFull(currentBatchDict['batchDetails'], currentBatchDict[dueDate][fullOrSamp], availablePdfs[dueDate][fullOrSamp]['batchList'])
         currentBatchDict['batchDetails']['length'] += currentBatchDict[dueDate][fullOrSamp]['batchLength']
-        if len(currentBatchDict[dueDate][fullOrSamp]['batchList']) > 0:
-            currentBatchDict[dueDate][fullOrSamp]['batchList'].append(currentBatchDict[dueDate][fullOrSamp]['header'].split('.pdf')[0] + '-full.pdf')
-            currentBatchDict['batchDetails']['length'] += 1.75
     else:
         currentBatchDict[dueDate][fullOrSamp] = batchLoopSample(currentBatchDict['batchDetails'], currentBatchDict[dueDate][fullOrSamp], availablePdfs[dueDate][fullOrSamp]['batchList'])
         currentBatchDict['batchDetails']['length'] += currentBatchDict[dueDate][fullOrSamp]['batchLength']
-        if len(currentBatchDict[dueDate][fullOrSamp]['batchList']) > 0:
-            currentBatchDict[dueDate][fullOrSamp]['batchList'].append(currentBatchDict[dueDate][fullOrSamp]['header'].split('.pdf')[0] + '-samp.pdf')
-            currentBatchDict['batchDetails']['length'] += 1.75
     return currentBatchDict
 
 def checkForOtherSamplesOfSameOrder(orderNumber, sortedList, samplesAllowed, samplesAdded): # when adding samples to a batch, checks for and counts other samples in the same order, ensures they will all fit in the batch.

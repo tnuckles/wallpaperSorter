@@ -186,7 +186,6 @@ def exportFromCaldera(batch):
     utilityToExport = glob.glob(pathToHotfolder + '/999999999-1-(*.pdf')
     samplesToExport = glob.glob(pathToHotfolder + '/*-Samp-*.pdf')
     fullToExport = glob.glob(pathToHotfolder + '/*-Full-*.pdf')
-    headersToExport = glob.glob(pathToHotfolder + '/*header*.pdf')
     
     for printPdf in samplesToExport:
         if '999999999' in printPdf:
@@ -200,8 +199,6 @@ def exportFromCaldera(batch):
         mkdir(batch + '/Samples/')
     if len(fullToExport) > 0:
         mkdir(batch + '/Full/')
-    if len(headersToExport) > 0:
-        mkdir(batch + '/Headers/')
     if len(utilityToExport) > 0:
         mkdir(batch + '/Utility/')
 
@@ -209,8 +206,6 @@ def exportFromCaldera(batch):
         move(pdf, batch + '/Samples/')
     for pdf in fullToExport:
         move(pdf, batch + '/Full/')
-    for pdf in headersToExport:
-        move(pdf, batch + '/Headers/')
     for printPdf in utilityToExport:
         move(printPdf, batch + '/Utility/')
 
@@ -339,14 +334,6 @@ def sortSamplesForCutting(pdfList): #takes a list of samples, then sorts them by
     if len(pdfList) == 0:
         return
     
-    header = ''    
-
-    for printPdf in pdfList: # This moves the header to the bottom of the list
-        if '999999999-header' in printPdf:
-            header = (printPdf)
-            pdfList.remove(header)
-            break
-    
     half_list_len = ceil(len(pdfList)/2)
     second_list_len = floor(len(pdfList)/2)
 
@@ -373,24 +360,14 @@ def sortSamplesForCutting(pdfList): #takes a list of samples, then sorts them by
             break
         counter += 1
 
-    sortedList.append(header)
     return sortedList
 
 def moveToHotfolder(pdfList, receivingHotfolder):
     for printPdf in pdfList:
-        if '999999999-header' not in printPdf:
-            print('| Moving', friendlyName(printPdf))
-            tryToMovePDF(printPdf, receivingHotfolder, friendlyName(printPdf))
-            wait(.5)
-            continue
-    for headerPdf in pdfList:
-        if '99999999-header' in headerPdf:
-            # if exists(receivingHotfolder + headerPdf.split('/')[-1]):
-            #     remove(headerPdf)
-            # else:
-            move(headerPdf, receivingHotfolder)
-            wait(.5)
-            break
+        print('| Moving', friendlyName(printPdf))
+        tryToMovePDF(printPdf, receivingHotfolder, friendlyName(printPdf))
+        wait(.5)
+        continue
     return
 
 def getInput(validOptionsList): # Prompts user for input and validates it against valid options. Should be reusable for all types of menus that match the batchDetailsMenu style.
